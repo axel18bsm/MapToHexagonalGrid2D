@@ -11,3 +11,5 @@ Automatically detect terrain types
 Manage accessible and inaccessible areas
 Calculate neighborhoods for movement
 Save and load configurations
+
+the documentation are here : https://github.com/axel18bsm/MapToHexagonalGrid2D/tree/main/ressources/doc
