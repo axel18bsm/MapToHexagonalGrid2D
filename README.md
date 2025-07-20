@@ -25,5 +25,9 @@ to detect type terrain  and update some error from "IA" (???!!) detection:
 
 <img width="1327" height="1070" alt="image" src="https://github.com/user-attachments/assets/b435eeea-354e-405a-9ad7-4921046f5fa1" />
 
+to remove or exempt some hexagones:
+<img width="1330" height="1066" alt="image" src="https://github.com/user-attachments/assets/c337d0c5-7361-45ae-a0e5-72b06896575b" />
+
+
 
 
