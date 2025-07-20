@@ -28,6 +28,17 @@ to detect type terrain  and update some error from "IA" (???!!) detection:
 to remove or exempt some hexagones:
 <img width="1330" height="1066" alt="image" src="https://github.com/user-attachments/assets/c337d0c5-7361-45ae-a0e5-72b06896575b" />
 
+you can update th size of the hexagone, increase, decrease the numbers of lines and columns, remove and exempts selection of hexagone.
+you can move the numerical grid to overlay the map, and you can move the map with the numerical grid:
+
+normal mode and edition mode 
+<img width="1326" height="1063" alt="image" src="https://github.com/user-attachments/assets/d31f8553-4e52-46d2-b2a5-b5c1ef97d31d" />
+
+suppression mode  and we can't swim in the sea:
+<img width="1328" height="1064" alt="image" src="https://github.com/user-attachments/assets/e7551fd9-9b0e-451e-884f-2aa832872092" />
+
+
+
 
 
 
