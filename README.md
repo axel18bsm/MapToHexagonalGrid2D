@@ -21,4 +21,9 @@ original map  :
 map in normal edition and finished state :
 <img width="1324" height="1066" alt="image" src="https://github.com/user-attachments/assets/c288745d-eacd-469e-b5cc-4f98a9b4980f" />
 
+to detect type terrain  and update some error from "IA" (???!!) detection:
+
+<img width="1327" height="1070" alt="image" src="https://github.com/user-attachments/assets/b435eeea-354e-405a-9ad7-4921046f5fa1" />
+
+
 
