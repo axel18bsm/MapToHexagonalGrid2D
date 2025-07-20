@@ -1,0 +1,8 @@
+HexDiameter=70.67
+HexScale=0.97
+HexOrientation=0
+CoinIn=False
+DeltaRelativeX=208.00
+DeltaRelativeY=-29.00
+Columns=16
+Rows=20
