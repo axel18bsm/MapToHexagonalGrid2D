@@ -41,6 +41,10 @@ i create a new mode about items or objets in the map to determine, bridge, villa
 An exemple from railroad point on the map.
 <img width="1329" height="1068" alt="image" src="https://github.com/user-attachments/assets/400ba5b4-15d3-428d-940b-c5806dc71c14" />
 
+A new mode to declare rivers and size about them
+<img width="1329" height="1066" alt="image" src="https://github.com/user-attachments/assets/ad606c5c-bc2c-46c2-bf46-66641061b690" />
+
+
 
 
 
