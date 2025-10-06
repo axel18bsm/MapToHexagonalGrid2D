@@ -37,6 +37,9 @@ normal mode and edition mode
 suppression mode  and we can't swim in the sea:
 <img width="1328" height="1064" alt="image" src="https://github.com/user-attachments/assets/e7551fd9-9b0e-451e-884f-2aa832872092" />
 
+i create a new mode about items or objets in the map to determine, bridge, village, town, railroard, roads, etc..
+An exemple from railroad point on the map.
+<img width="1329" height="1068" alt="image" src="https://github.com/user-attachments/assets/400ba5b4-15d3-428d-940b-c5806dc71c14" />
 
 
 
