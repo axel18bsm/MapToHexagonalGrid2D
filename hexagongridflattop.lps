@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectSession>
+    <PathDelim Value="\"/>
+    <Version Value="12"/>
+    <BuildModes Active="Default"/>
+    <Units>
+      <Unit>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <IsVisibleTab Value="True"/>
+        <TopLine Value="783"/>
+        <CursorPos X="5" Y="820"/>
+        <UsageCount Value="201"/>
+        <Bookmarks Count="1"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="boutonclic.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="BoutonClic"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="14"/>
+        <CursorPos X="3" Y="22"/>
+        <UsageCount Value="216"/>
+      </Unit>
+      <Unit>
+        <Filename Value="chargementcsv.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="Chargementcsv"/>
+        <EditorIndex Value="-1"/>
+        <UsageCount Value="215"/>
+      </Unit>
+      <Unit>
+        <Filename Value="initvariable.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="initVariable"/>
+        <EditorIndex Value="3"/>
+        <TopLine Value="196"/>
+        <CursorPos X="65" Y="212"/>
+        <UsageCount Value="210"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="traceastar.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="TraceAstar"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="19" Y="6"/>
+        <UsageCount Value="200"/>
+      </Unit>
+      <Unit>
+        <Filename Value="raygui.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="1"/>
+        <TopLine Value="582"/>
+        <CursorPos X="10" Y="619"/>
+        <UsageCount Value="292"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="hexagonlogic.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="HexagonLogic"/>
+        <EditorIndex Value="2"/>
+        <TopLine Value="239"/>
+        <CursorPos X="5" Y="276"/>
+        <UsageCount Value="278"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="detectionlogic.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="DetectionLogic"/>
+        <EditorIndex Value="4"/>
+        <CursorPos X="5" Y="123"/>
+        <UsageCount Value="182"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\..\..\..\AppData\Local\lazarus\onlinepackagemanager\packages\Ray4Laz\source\raylib.pas"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="49"/>
+        <CursorPos X="14" Y="70"/>
+        <UsageCount Value="104"/>
+      </Unit>
+      <Unit>
+        <Filename Value="C:\lazarus\fpc\3.2.2\source\rtl\objpas\sysutils\sysutilh.inc"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="17" Y="25"/>
+        <UsageCount Value="78"/>
+      </Unit>
+      <Unit>
+        <Filename Value="C:\lazarus\fpc\3.2.2\source\rtl\objpas\math.pp"/>
+        <UnitName Value="Math"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="5"/>
+        <CursorPos X="2"/>
+        <UsageCount Value="94"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\..\..\..\AppData\Local\lazarus\onlinepackagemanager\packages\Ray4Laz\source\raygui.pas"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="258" Y="583"/>
+        <UsageCount Value="7"/>
+      </Unit>
+      <Unit>
+        <Filename Value="C:\lazarus\fpc\3.2.2\source\rtl\objpas\sysutils\sysstrh.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="223"/>
+        <CursorPos X="21" Y="223"/>
+        <UsageCount Value="82"/>
+      </Unit>
+      <Unit>
+        <Filename Value="raylib.pas"/>
+        <EditorIndex Value="5"/>
+        <TopLine Value="1155"/>
+        <CursorPos X="3" Y="56"/>
+        <UsageCount Value="132"/>
+        <Loaded Value="True"/>
+      </Unit>
+    </Units>
+    <JumpHistory HistoryIndex="29">
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="1119" Column="23" TopLine="1029"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="1120" Column="18" TopLine="1100"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="1272" Column="21" TopLine="1239"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="1031" Column="7" TopLine="994"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="951" Column="13" TopLine="931"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="1508" Column="5" TopLine="1471"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="25" Column="53"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="149" Column="5" TopLine="112"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="586" Column="5" TopLine="548"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="303" Column="3" TopLine="290"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="857" Column="5" TopLine="820"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="1404" Column="5" TopLine="1367"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="152" Column="5" TopLine="48"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="215" Column="9" TopLine="178"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="1331" Column="26" TopLine="1100"/>
+      </Position>
+      <Position>
+        <Filename Value="initvariable.pas"/>
+        <Caret Line="159" TopLine="124"/>
+      </Position>
+      <Position>
+        <Filename Value="initvariable.pas"/>
+        <Caret Line="323" Column="5" TopLine="286"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="22"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="129" Column="5" TopLine="92"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="557" Column="5" TopLine="520"/>
+      </Position>
+      <Position>
+        <Filename Value="initvariable.pas"/>
+        <Caret Line="212" Column="67" TopLine="175"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="481" Column="109" TopLine="468"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="486" Column="34" TopLine="280"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="488" Column="53" TopLine="467"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="482" Column="52" TopLine="467"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="808" Column="5" TopLine="771"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagonlogic.pas"/>
+        <Caret Line="276" Column="5" TopLine="239"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="58" Column="11" TopLine="107"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="484" Column="5" TopLine="466"/>
+      </Position>
+      <Position>
+        <Filename Value="hexagongridflattop.lpr"/>
+        <Caret Line="133" Column="29" TopLine="102"/>
+      </Position>
+    </JumpHistory>
+    <RunParams>
+      <FormatVersion Value="2"/>
+      <Modes ActiveMode=""/>
+    </RunParams>
+  </ProjectSession>
+</CONFIG>

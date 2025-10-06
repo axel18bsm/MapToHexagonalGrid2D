@@ -24,7 +24,7 @@ const
 
 type
   THexOrientation = (hoFlatTop, hoPointyTop);
-   TAppMode = (amNormal, amDetection, amSuppression);
+  TAppMode = (amNormal, amDetection, amSuppression, amObjet, amRiviere);
   TTypeCarteActive = (tcAucune, tcImportee, tcChargee);
 
    TColorCount = record
@@ -154,6 +154,9 @@ type
     IsReference: Integer;          // Numéro de référence (0 = pas référence, 1,2,3... = ordre de sélection)
     Supprime: Boolean;             // NOUVEAU: Suppression logique (True = supprimé, False = actif)
     Exempt: Boolean;// pour avoir un hexagone valide mais pas accessible.
+    Objets: array[1..10] of Boolean;  // Les 10 objets possibles
+     Edges: array[1..6] of Integer;  // Type de rivière (0-5) sur les 6 côtés
+
   end;
 
   type
@@ -202,7 +205,11 @@ var
    ShowResetDialog: Boolean = False;           // Afficher le popup de confirmation reset
     AppModeSuppressionIndex: Integer = 0;          // Index pour ToggleGroup Suppression (0=Suppression, 1=Exemption)
   ToggleGroupSuppression: TRectangle;            // ToggleGroup pour Suppression/Exemption
-
+  SpinnerObjet: TRectangle;              // Spinner pour choisir l'objet (1-10)
+ValeurSpinnerObjet: Integer = 1;       // Valeur sélectionnée (1-10)
+   SpinnerRiviere: TRectangle;
+ValeurSpinnerRiviere: Integer = 1;  // Valeur 1 à 5
+HexRiviereSource: Integer = 0;      // 0 = aucun hex sélectionné
 
 // Procédures pour gérer les dimensions dynamiques
 procedure RecalculerDimensionsHex;
@@ -234,11 +241,15 @@ procedure SaveHexGridToCSV();
 implementation
 uses HexagonLogic;
 
+// =============================================================================
+// REMPLACER SaveHexGridToCSV() dans initvariable.pas (ligne ~241)
+// =============================================================================
+
 procedure SaveHexGridToCSV();
 var
   F: TextFile;
-  i, k: Integer;
-  NeighborStr, VerticesStr: string;
+  i, k, j: Integer;
+  NeighborStr, VerticesStr, ObjetsStr, EdgesStr: string;
   fichierCSV: string;
 begin
   if (TypeCarteActive <> tcAucune) and (NomCarteCourante <> '') then
@@ -250,29 +261,43 @@ begin
   AssignFile(F, fichierCSV);
   Rewrite(F);
   try
-    // MODIFIÉ: Ajout de la colonne Exempt à la fin
+    // MODIFIÉ: Ajout edge1 à edge6
     Writeln(F, 'Number,CenterX,CenterY,ColorR,ColorG,ColorB,ColorPtR,ColorPtG,ColorPtB,BSelected,Colonne,Ligne,Emplacement,PairImpairLigne,' +
                'Vertex1X,Vertex1Y,Vertex2X,Vertex2Y,Vertex3X,Vertex3Y,Vertex4X,Vertex4Y,Vertex5X,Vertex5Y,Vertex6X,Vertex6Y,' +
-               'Neighbor1,Neighbor2,Neighbor3,Neighbor4,Neighbor5,Neighbor6,TypeTerrain,IsReference,Supprime,Exempt');
+               'Neighbor1,Neighbor2,Neighbor3,Neighbor4,Neighbor5,Neighbor6,TypeTerrain,IsReference,Supprime,Exempt,' +
+               'objet1,objet2,objet3,objet4,objet5,objet6,objet7,objet8,objet9,objet10,' +
+               'edge1,edge2,edge3,edge4,edge5,edge6');
 
     for i := 1 to TotalNbreHex do
     begin
-      NeighborStr := Format('%d,%d,%d,%d,%d,%d', [HexGrid[i].Neighbors[1], HexGrid[i].Neighbors[2],
-                                                  HexGrid[i].Neighbors[3], HexGrid[i].Neighbors[4],
-                                                  HexGrid[i].Neighbors[5], HexGrid[i].Neighbors[6]]);
+      NeighborStr := Format('%d,%d,%d,%d,%d,%d', [HexGrid[i].Neighbors[1], HexGrid[i].Neighbors[2], HexGrid[i].Neighbors[3], HexGrid[i].Neighbors[4], HexGrid[i].Neighbors[5], HexGrid[i].Neighbors[6]]);
 
       VerticesStr := '';
       for k := 0 to 5 do
       begin
+        if k > 0 then VerticesStr := VerticesStr + ',';
         VerticesStr := VerticesStr + Format('%d,%d', [HexGrid[i].Vertices[k].x, HexGrid[i].Vertices[k].y]);
-        if k < 5 then
-          VerticesStr := VerticesStr + ',';
       end;
 
-      // MODIFIÉ: Ajout de Exempt à la fin de la ligne
-      Writeln(F, Format('%d,%.0f,%.0f,%d,%d,%d,%d,%d,%d,%s,%d,%d,%s,%s,%s,%s,%d,%d,%s,%s',
+      // Construction objets
+      ObjetsStr := '';
+      for j := 1 to 10 do
+      begin
+        if j > 1 then ObjetsStr := ObjetsStr + ',';
+        ObjetsStr := ObjetsStr + BoolToStr(HexGrid[i].Objets[j], True);
+      end;
+
+      // NOUVEAU: Construction edges
+      EdgesStr := '';
+      for j := 1 to 6 do
+      begin
+        if j > 1 then EdgesStr := EdgesStr + ',';
+        EdgesStr := EdgesStr + IntToStr(HexGrid[i].Edges[j]);
+      end;
+
+      Writeln(F, Format('%d,%d,%d,%d,%d,%d,%d,%d,%d,%s,%d,%d,%s,%s,%s,%s,%d,%d,%s,%s,%s,%s',
         [HexGrid[i].Number,
-         HexGrid[i].Center.x, HexGrid[i].Center.y,
+         Round(HexGrid[i].Center.x), Round(HexGrid[i].Center.y),
          HexGrid[i].Color.r, HexGrid[i].Color.g, HexGrid[i].Color.b,
          HexGrid[i].ColorPt.r, HexGrid[i].ColorPt.g, HexGrid[i].ColorPt.b,
          BoolToStr(HexGrid[i].Selected, True),
@@ -281,17 +306,27 @@ begin
          BoolToStr(HexGrid[i].PairImpairLigne, True),
          VerticesStr,
          NeighborStr,
-         HexGrid[i].TypeTerrain,
-         HexGrid[i].IsReference,
-         BoolToStr(HexGrid[i].Supprime, True),
-         BoolToStr(HexGrid[i].Exempt, True)]));  // NOUVEAU: Exempt
+         HexGrid[i].TypeTerrain, HexGrid[i].IsReference,
+         BoolToStr(HexGrid[i].Supprime, True), BoolToStr(HexGrid[i].Exempt, True),
+         ObjetsStr,
+         EdgesStr]));  // NOUVEAU
     end;
 
-    WriteLn('Sauvegarde terminée avec données de suppression et exemption');
-  finally
     CloseFile(F);
+    MessageSauvegarde := 'Fichier CSV sauvegardé : ' + fichierCSV;
+    WriteLn('Fichier CSV créé avec succès : ' + fichierCSV);
+  except
+    on E: Exception do
+    begin
+      CloseFile(F);
+      WriteLn('Erreur lors de la sauvegarde CSV : ' + E.Message);
+    end;
   end;
 end;
+// =============================================================================
+// REMPLACER LoadDetectionDataFromCSV() dans initvariable.pas (ligne ~309)
+// =============================================================================
+
 function LoadDetectionDataFromCSV(const csvFilePath: string): Boolean;
 var
   F: TextFile;
@@ -303,6 +338,7 @@ var
   supprime, exempt: Boolean;
   pos, startPos: Integer;
   loadedReferences: Integer;
+  j: Integer;
 begin
   Result := False;
 
@@ -312,24 +348,21 @@ begin
     Exit;
   end;
 
-  WriteLn('Chargement des données de détection, suppression et exemption depuis: ' + csvFilePath);
+  WriteLn('Chargement des données depuis: ' + csvFilePath);
 
   AssignFile(F, PChar(csvFilePath));
   Reset(F);
   try
-    // Lire la première ligne (en-têtes) et l'ignorer
     if not Eof(F) then
       Readln(F, ligne);
 
     loadedReferences := 0;
 
-    // Lire chaque ligne de données
     while not Eof(F) do
     begin
       Readln(F, ligne);
       if Trim(ligne) = '' then Continue;
 
-      // Parser la ligne CSV (méthode simple)
       SetLength(elements, 0);
       elementCount := 0;
       startPos := 1;
@@ -345,28 +378,34 @@ begin
         end;
       end;
 
-      // Ajouter le dernier élément
       SetLength(elements, elementCount + 1);
       elements[elementCount] := Copy(ligne, startPos, Length(ligne) - startPos + 1);
       Inc(elementCount);
 
-      // MODIFIÉ: Vérifier qu'on a assez d'éléments (36: 35 colonnes originales + Exempt)
-      if elementCount >= 36 then
+      // NOUVEAU: 52 colonnes (36 base + 10 objets + 6 edges)
+      if elementCount >= 52 then
       begin
         try
           hexNumber := StrToInt(Trim(elements[0]));
-          typeTerrain := StrToInt(Trim(elements[32])); // TypeTerrain en position 32
-          isReference := StrToInt(Trim(elements[33])); // IsReference en position 33
-          supprime := (Trim(elements[34]) = 'True') or (Trim(elements[34]) = '-1'); // Supprime en position 34
-          exempt := (Trim(elements[35]) = 'True') or (Trim(elements[35]) = '-1');   // NOUVEAU: Exempt en position 35
+          typeTerrain := StrToInt(Trim(elements[32]));
+          isReference := StrToInt(Trim(elements[33]));
+          supprime := (Trim(elements[34]) = 'True') or (Trim(elements[34]) = '-1');
+          exempt := (Trim(elements[35]) = 'True') or (Trim(elements[35]) = '-1');
 
-          // Vérifier que le numéro d'hexagone est valide
           if (hexNumber >= 1) and (hexNumber <= TotalNbreHex) then
           begin
             HexGrid[hexNumber].TypeTerrain := typeTerrain;
             HexGrid[hexNumber].IsReference := isReference;
             HexGrid[hexNumber].Supprime := supprime;
-            HexGrid[hexNumber].Exempt := exempt;  // NOUVEAU: Charger l'état d'exemption
+            HexGrid[hexNumber].Exempt := exempt;
+
+            // Charger objets (36-45)
+            for j := 1 to 10 do
+              HexGrid[hexNumber].Objets[j] := (Trim(elements[35 + j]) = 'True') or (Trim(elements[35 + j]) = '-1');
+
+            // NOUVEAU: Charger edges (46-51)
+            for j := 1 to 6 do
+              HexGrid[hexNumber].Edges[j] := StrToIntDef(Trim(elements[45 + j]), 0);
 
             if isReference > 0 then
               Inc(loadedReferences);
@@ -375,12 +414,83 @@ begin
         except
           on E: Exception do
           begin
-            WriteLn('Erreur lors du parsing de la ligne pour hexagone: ' + elements[0]);
+            WriteLn('Erreur parsing ligne hex: ' + elements[0]);
             Continue;
           end;
         end;
       end
-      // NOUVEAU: Gérer les anciens fichiers CSV (sans colonne Exempt)
+      // Anciens fichiers avec objets mais sans edges (46 colonnes)
+      else if elementCount >= 46 then
+      begin
+        try
+          hexNumber := StrToInt(Trim(elements[0]));
+          typeTerrain := StrToInt(Trim(elements[32]));
+          isReference := StrToInt(Trim(elements[33]));
+          supprime := (Trim(elements[34]) = 'True') or (Trim(elements[34]) = '-1');
+          exempt := (Trim(elements[35]) = 'True') or (Trim(elements[35]) = '-1');
+
+          if (hexNumber >= 1) and (hexNumber <= TotalNbreHex) then
+          begin
+            HexGrid[hexNumber].TypeTerrain := typeTerrain;
+            HexGrid[hexNumber].IsReference := isReference;
+            HexGrid[hexNumber].Supprime := supprime;
+            HexGrid[hexNumber].Exempt := exempt;
+
+            for j := 1 to 10 do
+              HexGrid[hexNumber].Objets[j] := (Trim(elements[35 + j]) = 'True') or (Trim(elements[35 + j]) = '-1');
+
+            // Initialiser edges à 0
+            for j := 1 to 6 do
+              HexGrid[hexNumber].Edges[j] := 0;
+
+            if isReference > 0 then
+              Inc(loadedReferences);
+          end;
+
+        except
+          on E: Exception do
+          begin
+            WriteLn('Erreur parsing ligne hex: ' + elements[0]);
+            Continue;
+          end;
+        end;
+      end
+      // Anciens fichiers sans objets ni edges (36 colonnes)
+      else if elementCount >= 36 then
+      begin
+        try
+          hexNumber := StrToInt(Trim(elements[0]));
+          typeTerrain := StrToInt(Trim(elements[32]));
+          isReference := StrToInt(Trim(elements[33]));
+          supprime := (Trim(elements[34]) = 'True') or (Trim(elements[34]) = '-1');
+          exempt := (Trim(elements[35]) = 'True') or (Trim(elements[35]) = '-1');
+
+          if (hexNumber >= 1) and (hexNumber <= TotalNbreHex) then
+          begin
+            HexGrid[hexNumber].TypeTerrain := typeTerrain;
+            HexGrid[hexNumber].IsReference := isReference;
+            HexGrid[hexNumber].Supprime := supprime;
+            HexGrid[hexNumber].Exempt := exempt;
+
+            for j := 1 to 10 do
+              HexGrid[hexNumber].Objets[j] := False;
+
+            for j := 1 to 6 do
+              HexGrid[hexNumber].Edges[j] := 0;
+
+            if isReference > 0 then
+              Inc(loadedReferences);
+          end;
+
+        except
+          on E: Exception do
+          begin
+            WriteLn('Erreur parsing ligne hex: ' + elements[0]);
+            Continue;
+          end;
+        end;
+      end
+      // Très anciens fichiers (35 colonnes)
       else if elementCount >= 35 then
       begin
         try
@@ -394,7 +504,13 @@ begin
             HexGrid[hexNumber].TypeTerrain := typeTerrain;
             HexGrid[hexNumber].IsReference := isReference;
             HexGrid[hexNumber].Supprime := supprime;
-            HexGrid[hexNumber].Exempt := False;  // NOUVEAU: Par défaut False pour anciens fichiers
+            HexGrid[hexNumber].Exempt := False;
+
+            for j := 1 to 10 do
+              HexGrid[hexNumber].Objets[j] := False;
+
+            for j := 1 to 6 do
+              HexGrid[hexNumber].Edges[j] := 0;
 
             if isReference > 0 then
               Inc(loadedReferences);
@@ -403,26 +519,25 @@ begin
         except
           on E: Exception do
           begin
-            WriteLn('Erreur lors du parsing de la ligne pour hexagone: ' + elements[0]);
+            WriteLn('Erreur parsing ligne hex: ' + elements[0]);
             Continue;
           end;
         end;
       end;
     end;
 
-    // Recalculer NombreReferences
     NombreReferences := loadedReferences;
 
     WriteLn('Données chargées avec succès:');
-    WriteLn('- Références chargées: ' + IntToStr(loadedReferences));
-    WriteLn('- TypeTerrain, Supprime et Exempt restaurés pour tous les hexagones');
+    WriteLn('- Références: ' + IntToStr(loadedReferences));
+    WriteLn('- TypeTerrain, Supprime, Exempt, Objets et Edges restaurés');
 
     Result := True;
 
   except
     on E: Exception do
     begin
-      WriteLn('ERREUR lors du chargement du CSV: ' + E.Message);
+      WriteLn('ERREUR chargement CSV: ' + E.Message);
       Result := False;
     end;
   end;
@@ -1024,7 +1139,7 @@ end;
 
 procedure AppliquerEchelle(NouvelleEchelle: Single);
 begin
-  if (NouvelleEchelle >= 0.5) and (NouvelleEchelle <= 2.0) then
+  if (NouvelleEchelle >= 0.5) and (NouvelleEchelle <= 20.0) then
   begin
     HexScale := NouvelleEchelle;
     RecalculerDimensionsHex;

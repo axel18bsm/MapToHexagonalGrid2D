@@ -19,67 +19,41 @@ var
   ButtonSauverCarte: TButtonAxel;    // NOUVEAU
    ButtonDetection:TButtonAxel;
 
-   // =============================================================================
-   // FONCTION CORRIGÉE: SaveHexGridToCSV() dans hexagongridflattop.lpr
-   // =============================================================================
 
-   //procedure SaveHexGridToCSV();
-   //var
-   //  F: TextFile;
-   //  i, k: Integer;
-   //  NeighborStr, VerticesStr: string;
-   //  fichierCSV: string;
-   //begin
-   //  if (TypeCarteActive <> tcAucune) and (NomCarteCourante <> '') then
-   //    fichierCSV := './save/' + NomCarteCourante + '/' + SaveFileName
-   //  else
-   //    fichierCSV := SaveFileName;
-   //
-   //  WriteLn('Sauvegarde CSV dans: ' + fichierCSV);
-   //  AssignFile(F, fichierCSV);
-   //  Rewrite(F);
-   //  try
-   //    // CORRIGÉ: Ajout de la colonne Supprime à la fin
-   //    Writeln(F, 'Number,CenterX,CenterY,ColorR,ColorG,ColorB,ColorPtR,ColorPtG,ColorPtB,BSelected,Colonne,Ligne,Emplacement,PairImpairLigne,' +
-   //               'Vertex1X,Vertex1Y,Vertex2X,Vertex2Y,Vertex3X,Vertex3Y,Vertex4X,Vertex4Y,Vertex5X,Vertex5Y,Vertex6X,Vertex6Y,' +
-   //               'Neighbor1,Neighbor2,Neighbor3,Neighbor4,Neighbor5,Neighbor6,TypeTerrain,IsReference,Supprime');
-   //
-   //    for i := 1 to TotalNbreHex do
-   //    begin
-   //      NeighborStr := Format('%d,%d,%d,%d,%d,%d', [HexGrid[i].Neighbors[1], HexGrid[i].Neighbors[2],
-   //                                                  HexGrid[i].Neighbors[3], HexGrid[i].Neighbors[4],
-   //                                                  HexGrid[i].Neighbors[5], HexGrid[i].Neighbors[6]]);
-   //
-   //      VerticesStr := '';
-   //      for k := 0 to 5 do
-   //      begin
-   //        VerticesStr := VerticesStr + Format('%d,%d', [HexGrid[i].Vertices[k].x, HexGrid[i].Vertices[k].y]);
-   //        if k < 5 then
-   //          VerticesStr := VerticesStr + ',';
-   //      end;
-   //
-   //      // CORRIGÉ: Ajout de Supprime à la fin de la ligne
-   //      Writeln(F, Format('%d,%.0f,%.0f,%d,%d,%d,%d,%d,%d,%s,%d,%d,%s,%s,%s,%s,%d,%d,%s',
-   //        [HexGrid[i].Number,
-   //         HexGrid[i].Center.x, HexGrid[i].Center.y,
-   //         HexGrid[i].Color.r, HexGrid[i].Color.g, HexGrid[i].Color.b,
-   //         HexGrid[i].ColorPt.r, HexGrid[i].ColorPt.g, HexGrid[i].ColorPt.b,
-   //         BoolToStr(HexGrid[i].Selected, True),
-   //         HexGrid[i].Colonne, HexGrid[i].Ligne,
-   //         EmplacementToString(HexGrid[i].Poshexagone),
-   //         BoolToStr(HexGrid[i].PairImpairLigne, True),
-   //         VerticesStr,
-   //         NeighborStr,
-   //         HexGrid[i].TypeTerrain,
-   //         HexGrid[i].IsReference,
-   //         BoolToStr(HexGrid[i].Supprime, True)]));  // NOUVEAU: Supprime
-   //    end;
-   //
-   //    WriteLn('Sauvegarde terminée avec données de suppression');
-   //  finally
-   //    CloseFile(F);
-   //  end;
-   //end;
+// Trouve le côté de hex1 qui touche hex2 (retourne 1-6, ou 0 si non adjacents)
+function TrouverAreteCommuneEntreVoisins(hex1, hex2: Integer): Integer;
+var
+  i: Integer;
+begin
+  Result := 0;
+  for i := 1 to 6 do
+  begin
+    if HexGrid[hex1].Neighbors[i] = hex2 then
+    begin
+      Result := i;
+      Exit;
+    end;
+  end;
+end;
+
+// Retourne le côté opposé (1<->4, 2<->5, 3<->6)
+function CoteOppose(cote: Integer): Integer;
+begin
+  case cote of
+    1: Result := 4;
+    2: Result := 5;
+    3: Result := 6;
+    4: Result := 1;
+    5: Result := 2;
+    6: Result := 3;
+  else
+    Result := 0;
+  end;
+end;
+// =============================================================================
+// FONCTION MODIFIÉE: creationbouttons
+// MODIFICATION: ToggleGroupAppMode.width réduit de 80 → 40 (moitié)
+// =============================================================================
 
 procedure creationbouttons;
 begin
@@ -122,10 +96,12 @@ begin
   TextBoxLignes.width := 80;
   TextBoxLignes.height := 25;
 
-  // ToggleGroup Principal (repositionné)
+  // ============================================================================
+  // ToggleGroup Principal - LARGEUR RÉDUITE DE MOITIÉ (80 → 40)
+  // ============================================================================
   ToggleGroupAppMode.x := windowWidth - PanelWidth + 50;
   ToggleGroupAppMode.y := 465;
-  ToggleGroupAppMode.width := 80;
+  ToggleGroupAppMode.width := 40;  // ← MODIFIÉ: 80 → 40 (moitié)
   ToggleGroupAppMode.height := 25;
 
   // DÉTECTION : Bouton détection (repositionné plus bas)
@@ -142,6 +118,19 @@ begin
   ToggleGroupSuppression.y := 615;
   ToggleGroupSuppression.width := 100;
   ToggleGroupSuppression.height := 25;
+
+  // ============================================================================
+  // NOUVEAU: Spinner pour les objets/items (Mode Item)
+  // ============================================================================
+  SpinnerObjet.x := windowWidth - PanelWidth + 50;
+  SpinnerObjet.y := 525;
+  SpinnerObjet.width := 100;
+  SpinnerObjet.height := 25;
+
+  SpinnerRiviere.x := windowWidth - PanelWidth + 50;
+SpinnerRiviere.y := 520;
+SpinnerRiviere.width := 100;
+SpinnerRiviere.height := 25;
 end;
 
 procedure DrawImportSelector;
@@ -296,6 +285,16 @@ begin
   CalculateNeighbors;
 end;
 
+// =============================================================================
+// FONCTION MODIFIÉE: DrawGUIPanel
+// AJOUT: Interface pour le mode Item
+// MODIFICATION: ToggleGroup avec 4 modes (Normal, Détection, Suppression, Item)
+// =============================================================================
+
+// =============================================================================
+// REMPLACER DrawGUIPanel() dans hexagongridflattop.lpr (ligne ~318)
+// =============================================================================
+
 procedure DrawGUIPanel();
 var
   panelRect: TRectangle;
@@ -367,8 +366,9 @@ begin
   if GuivalueBox(TextBoxLignes, '', @rows, 2,100,editingLignes)<>0 then editingLignes:=NOT editingLignes;
 
   // =================== TOGGLE GROUP PRINCIPAL ===================
+  // MODIFIÉ: 5 modes (ajout de Riviere)
   oldAppModeIndex := AppModeIndex;
-  GuiToggleGroup(ToggleGroupAppMode, 'Normal;Détection;Suppression', @AppModeIndex);
+  GuiToggleGroup(ToggleGroupAppMode, 'Normal;Détection;Suppression;Item;Riviere', @AppModeIndex);
 
   if AppModeIndex <> oldAppModeIndex then
   begin
@@ -376,6 +376,8 @@ begin
       0: AppMode := amNormal;
       1: AppMode := amDetection;
       2: AppMode := amSuppression;
+      3: AppMode := amObjet;
+      4: AppMode := amRiviere;  // NOUVEAU
     end;
   end;
 
@@ -437,14 +439,14 @@ begin
     GuiToggleGroup(ToggleGroupSuppression, 'Suppression;Exemption', @AppModeSuppressionIndex);
 
     case AppModeSuppressionIndex of
-      0: // Mode Suppression
+      0:
       begin
         DrawText('Action: Supprimer/Restaurer', windowWidth - PanelWidth + 50, 650, 14, RED);
         DrawText('1er clic: Supprime + croix rouge', windowWidth - PanelWidth + 50, 670, 12, DARKGRAY);
         DrawText('2ème clic: Restaure hexagone', windowWidth - PanelWidth + 50, 685, 12, DARKGRAY);
       end;
 
-      1: // Mode Exemption
+      1:
       begin
         DrawText('Action: Exemption', windowWidth - PanelWidth + 50, 650, 14, ORANGE);
         DrawText('1er clic: Exempte + O rouge', windowWidth - PanelWidth + 50, 670, 12, DARKGRAY);
@@ -453,6 +455,51 @@ begin
     end;
 
     DrawText('Cliquez sur un hexagone', windowWidth - PanelWidth + 50, 705, 12, DARKBLUE);
+  end;
+
+  // =================== INTERFACE ITEM ===================
+  if AppMode = amObjet then
+  begin
+    DrawText('Mode Item actif:', windowWidth - PanelWidth + 50, 495, 14, BLUE);
+
+    GuiSpinner(SpinnerObjet, '', @ValeurSpinnerObjet, 1, 10, False);
+
+    DrawText(PChar('Item sélectionné: ' + IntToStr(ValeurSpinnerObjet)),
+             windowWidth - PanelWidth + 160, 515, 12, DARKBLUE);
+
+    DrawText('Actions:', windowWidth - PanelWidth + 50, 545, 12, DARKGRAY);
+    DrawText('1er clic: Place rond rouge', windowWidth - PanelWidth + 50, 565, 12, DARKGRAY);
+    DrawText('2ème clic: Supprime le rond', windowWidth - PanelWidth + 50, 580, 12, DARKGRAY);
+    DrawText('', windowWidth - PanelWidth + 50, 595, 12, DARKGRAY);
+    DrawText('Affichage:', windowWidth - PanelWidth + 50, 615, 12, DARKGRAY);
+    DrawText('Uniquement items du slider actuel', windowWidth - PanelWidth + 50, 635, 12, DARKGRAY);
+    DrawText('', windowWidth - PanelWidth + 50, 650, 12, DARKGRAY);
+    DrawText('Note: Un hexagone peut avoir', windowWidth - PanelWidth + 50, 670, 11, DARKGRAY);
+    DrawText('plusieurs items simultanément', windowWidth - PanelWidth + 50, 685, 11, DARKGRAY);
+  end;
+
+  // ============================================================================
+  // NOUVEAU: INTERFACE RIVIÈRE
+  // ============================================================================
+  if AppMode = amRiviere then
+  begin
+    DrawText('Mode Rivière actif:', windowWidth - PanelWidth + 50, 495, 14, RED);
+
+    // Spinner pour sélectionner le type (1-5)
+    GuiSpinner(SpinnerRiviere, '', @ValeurSpinnerRiviere, 1, 5, False);
+
+    DrawText(PChar('Type: riv' + IntToStr(ValeurSpinnerRiviere)),windowWidth - PanelWidth + 160, 515, 12, DARKGRAY);
+
+    DrawText('Instructions:', windowWidth - PanelWidth + 50, 545, 12, DARKGRAY);
+    DrawText('1er clic: Sélectionne hex source', windowWidth - PanelWidth + 50, 565, 12, DARKGRAY);
+    DrawText('2ème clic: Hex adjacent', windowWidth - PanelWidth + 50, 580, 12, DARKGRAY);
+    DrawText('  → Trace trait rouge', windowWidth - PanelWidth + 50, 595, 12, DARKGRAY);
+    DrawText('', windowWidth - PanelWidth + 50, 610, 12, DARKGRAY);
+    DrawText('Re-clic sur paire:', windowWidth - PanelWidth + 50, 625, 12, DARKGRAY);
+    DrawText('  → Supprime le trait', windowWidth - PanelWidth + 50, 640, 12, DARKGRAY);
+    DrawText('', windowWidth - PanelWidth + 50, 655, 12, DARKGRAY);
+    DrawText('Épaisseur = valeur spinner', windowWidth - PanelWidth + 50, 670, 11, DARKGRAY);
+    DrawText('(1-5 pixels)', windowWidth - PanelWidth + 50, 685, 11, DARKGRAY);
   end;
 
   // =================== INFORMATIONS GÉNÉRALES ===================
@@ -472,6 +519,7 @@ begin
   DrawText(PChar('Grille: ' + IntToStr(columns) + 'x' + IntToStr(rows) + ' (' + IntToStr(TotalNbreHex) + ' hex)'),
            windowWidth - PanelWidth + 50, 775, 14, DARKGREEN);
 
+  // MODIFIÉ: Ajout du cas amRiviere
   case AppMode of
     amNormal: DrawText('Mode actuel: Normal', windowWidth - PanelWidth + 50, 795, 14, DARKGREEN);
     amDetection: DrawText('Mode actuel: Détection', windowWidth - PanelWidth + 50, 795, 14, ORANGE);
@@ -482,6 +530,8 @@ begin
         1: DrawText('Mode actuel: Exemption', windowWidth - PanelWidth + 50, 795, 14, ORANGE);
       end;
     end;
+    amObjet: DrawText('Mode actuel: Item', windowWidth - PanelWidth + 50, 795, 14, BLUE);
+    amRiviere: DrawText('Mode actuel: Rivière', windowWidth - PanelWidth + 50, 795, 14, RED);  // NOUVEAU
   end;
 
   // =================== MESSAGEBOX DE RÉINITIALISATION ===================
@@ -508,11 +558,6 @@ begin
       ShowResetDialog := False;
     end;
   end;
-end;
-
-function ColorToString(Color: TColor): string;
-begin
-  Result := Format('%d,%d,%d', [Color.r, Color.g, Color.b]);
 end;
 
 procedure DrawHexagon2(hex: THexCell);
@@ -613,12 +658,24 @@ begin
   end;
 end;
 
+// =============================================================================
+// FONCTION MODIFIÉE: DrawHexGrid
+// AJOUT: Affichage des ronds rouges pour le mode Item
+// =============================================================================
+
+// =============================================================================
+// FONCTION COMPLÈTE CORRIGÉE: DrawHexGrid
+// CORRECTION: Traits rouges affichés UNIQUEMENT en mode Rivière
+// =============================================================================
+
 procedure DrawHexGrid(dessineLesNombres: boolean);
 var
   hexNumberText: array[0..5] of char;
   outlineColor: TColor;
   rotationAngle: single;
   showNumbers: boolean;
+  j, voisin: Integer;
+  epaisseur: Single;
 begin
   case HexOrientation of
     hoFlatTop:   rotationAngle := 0;
@@ -640,6 +697,18 @@ begin
       begin
         // En mode Suppression : afficher tous les hexagones
       end;
+
+      amObjet:
+      begin
+        if HexGrid[i].Supprime then
+          Continue;
+      end;
+
+      amRiviere:
+      begin
+        if HexGrid[i].Supprime then
+          Continue;
+      end;
     end;
 
     if lacarte.grilletransparente = False then
@@ -657,6 +726,8 @@ begin
       outlineColor := RED
     else if (AppMode = amSuppression) and HexGrid[i].Supprime then
       outlineColor := RED
+    else if (AppMode = amRiviere) and (i = HexRiviereSource) then
+      outlineColor := ORANGE  // Hex source en orange
     else
       outlineColor := orange;
 
@@ -692,7 +763,6 @@ begin
       end;
     end;
 
-    // EXISTANT: Affichage de la croix rouge en mode suppression
     if (AppMode = amSuppression) and HexGrid[i].Supprime then
     begin
       DrawText('X',
@@ -701,14 +771,50 @@ begin
                24, RED);
     end;
 
-    // NOUVEAU: Affichage du "O" rouge pour les hexagones exempts
     if (AppMode = amSuppression) and HexGrid[i].Exempt then
     begin
-      // Dessiner un "O" rouge au centre de l'hexagone
       DrawText('O',
                Round(HexGrid[I].Center.x - 8),
                Round(HexGrid[I].Center.y - 12),
                24, RED);
+    end;
+
+    // Affichage des ronds rouges pour le mode Item
+    if (AppMode = amObjet) and HexGrid[i].Objets[ValeurSpinnerObjet] then
+    begin
+      DrawCircle(Round(HexGrid[I].Center.x),
+                 Round(HexGrid[I].Center.y),
+                 5, RED);
+    end;
+  end;
+
+  // ============================================================================
+  // CORRIGÉ: Affichage des traits rouges UNIQUEMENT en mode Rivière
+  // ============================================================================
+  if AppMode = amRiviere then  // ← CONDITION AJOUTÉE !
+  begin
+    for i := 1 to TotalNbreHex do
+    begin
+      if HexGrid[i].Supprime then Continue;
+
+      // Parcourir les 6 côtés de chaque hexagone
+      for j := 1 to 6 do
+      begin
+        if HexGrid[i].Edges[j] > 0 then
+        begin
+          // Trouver le voisin
+          voisin := HexGrid[i].Neighbors[j];
+          if (voisin > 0) and (voisin <= TotalNbreHex) then
+          begin
+            // Pour éviter de dessiner 2 fois, ne dessiner que si i < voisin
+            if i < voisin then
+            begin
+              epaisseur := HexGrid[i].Edges[j];  // 1-5 pixels
+              DrawLineEx(HexGrid[i].Center, HexGrid[voisin].Center, epaisseur, RED);
+            end;
+          end;
+        end;
+      end;
     end;
   end;
 end;
@@ -878,39 +984,7 @@ begin
     DrawText(TextBuffer, 20, YPos, 16, DARKGREEN);
   end;
 end;
-
-procedure HandleHexagonSelection();
-var
-  mouseX, mouseY: integer;
-  dx, dy: single;
-  dist: single;
-begin
-  mouseX := GetMouseX();
-  mouseY := GetMouseY();
-  HexSelected := False;
-
-  if (mouseX < windowWidth - PanelWidth) and (mouseY < windowHeight - InfoBoxHeight) then
-  begin
-    // CORRIGÉ: Utilise maintenant TotalNbreHex variable !
-    for i := 1 to TotalNbreHex do
-    begin
-      dx := mouseX - HexGrid[i].Center.x;
-      dy := mouseY - HexGrid[i].Center.y;
-      dist := sqrt(dx * dx + dy * dy);
-
-      if dist <= HexRadius - decalageRayon then
-      begin
-        HexGrid[i].Selected := True;
-        SelectedHex := HexGrid[i];
-        HexSelected := True;
-      end
-      else
-        HexGrid[i].Selected := False;
-    end;
-  end;
-end;
-
-// =============================================================================
+     // =============================================================================
 // FONCTION COMPLÈTE: RestaurerVoisinageHexagone() dans hexagongridflattop.lpr
 // =============================================================================
 
@@ -991,9 +1065,13 @@ begin
   WriteLn('=== FIN RESTAURATION COMPLÈTE ===');
   WriteLn('');
 end;
+/// =============================================================================
+// FONCTION MODIFIÉE: HandleDragAndDrop
+// AJOUT: Gestion du clic dans le mode Item (amObjet)
+// =============================================================================
 
 // =============================================================================
-// FONCTION OPTIMISÉE: HandleDragAndDrop() dans hexagongridflattop.lpr
+// REMPLACER HandleDragAndDrop() dans hexagongridflattop.lpr (ligne ~1037)
 // =============================================================================
 
 procedure HandleDragAndDrop();
@@ -1008,6 +1086,7 @@ var
   ancienVoisin: Integer;
   newHex1RefX, newHex1RefY: Single;
   deltaRefX, deltaRefY: Single;
+  coteSource, coteDest: Integer;  // NOUVEAU: pour les rivières
 begin
   mousePos := GetMousePosition();
 
@@ -1126,7 +1205,7 @@ begin
               amSuppression:
               begin
                 case AppModeSuppressionIndex of
-                  0: // Mode Suppression
+                  0:
                   begin
                     if HexGrid[i].Supprime = False then
                     begin
@@ -1169,28 +1248,113 @@ begin
                     HexSelected := True;
                   end;
 
-                  1: // Mode Exemption
+                  1:
                   begin
                     if HexGrid[i].Exempt = False then
                     begin
-                      // PREMIER CLIC → EXEMPTION
                       WriteLn('Exemption hexagone #' + IntToStr(i));
-                      ExempterHexagone(i);  // Utiliser la fonction
+                      ExempterHexagone(i);
                     end
                     else
                     begin
-                      // DEUXIÈME CLIC → RESTAURATION
                       WriteLn('Restauration exemption hexagone #' + IntToStr(i));
-                      RestaurerHexagoneExempt(i);  // Utiliser la fonction dummy
+                      RestaurerHexagoneExempt(i);
                     end;
 
-                    // Mettre à jour la sélection pour l'affichage des infos
                     for j := 1 to TotalNbreHex do
                       HexGrid[j].Selected := False;
                     HexGrid[i].Selected := True;
                     SelectedHex := HexGrid[i];
                     HexSelected := True;
                   end;
+                end;
+              end;
+
+              amObjet:
+              begin
+                HexGrid[i].Objets[ValeurSpinnerObjet] := not HexGrid[i].Objets[ValeurSpinnerObjet];
+
+                if HexGrid[i].Objets[ValeurSpinnerObjet] then
+                  WriteLn('Item ' + IntToStr(ValeurSpinnerObjet) + ' placé sur hexagone #' + IntToStr(i))
+                else
+                  WriteLn('Item ' + IntToStr(ValeurSpinnerObjet) + ' supprimé de l''hexagone #' + IntToStr(i));
+
+                for j := 1 to TotalNbreHex do
+                  HexGrid[j].Selected := False;
+                HexGrid[i].Selected := True;
+                SelectedHex := HexGrid[i];
+                HexSelected := True;
+              end;
+
+              // ============================================================================
+              // NOUVEAU: Gestion du mode Rivière (2 clics successifs)
+              // ============================================================================
+              amRiviere:
+              begin
+                if HexRiviereSource = 0 then
+                begin
+                  // ========================================
+                  // PREMIER CLIC - Sélectionner la source
+                  // ========================================
+                  HexRiviereSource := i;
+                  WriteLn('Riviere: Source selectionnee #' + IntToStr(i));
+
+                  for j := 1 to TotalNbreHex do
+                    HexGrid[j].Selected := False;
+                  HexGrid[i].Selected := True;
+                  SelectedHex := HexGrid[i];
+                  HexSelected := True;
+                end
+                else
+                begin
+                  // ========================================
+                  // DEUXIÈME CLIC - Placer ou supprimer la rivière
+                  // ========================================
+                  // Vérifier si les hexagones sont adjacents
+                  coteSource := TrouverAreteCommuneEntreVoisins(HexRiviereSource, i);
+
+                  if coteSource > 0 then
+                  begin
+                    // Les hexagones sont adjacents
+                    coteDest := CoteOppose(coteSource);
+
+                    // Vérifier si une rivière existe déjà
+                    if HexGrid[HexRiviereSource].Edges[coteSource] > 0 then
+                    begin
+                      // ========================================
+                      // SUPPRESSION - Rivière existe déjà
+                      // ========================================
+                      HexGrid[HexRiviereSource].Edges[coteSource] := 0;
+                      HexGrid[i].Edges[coteDest] := 0;
+                      WriteLn('Riviere supprimee entre #' + IntToStr(HexRiviereSource) + ' et #' + IntToStr(i));
+                    end
+                    else
+                    begin
+                      // ========================================
+                      // PLACEMENT - Nouvelle rivière
+                      // ========================================
+                      HexGrid[HexRiviereSource].Edges[coteSource] := ValeurSpinnerRiviere;
+                      HexGrid[i].Edges[coteDest] := ValeurSpinnerRiviere;
+                      WriteLn('Riviere type ' + IntToStr(ValeurSpinnerRiviere) + ' placee entre #' + IntToStr(HexRiviereSource) + ' et #' + IntToStr(i));
+                    end;
+                  end
+                  else
+                  begin
+                    // ========================================
+                    // ERREUR - Les hexagones ne sont pas voisins
+                    // ========================================
+                    WriteLn('ERREUR: Les hexagones #' + IntToStr(HexRiviereSource) + ' et #' + IntToStr(i) + ' ne sont pas adjacents');
+                  end;
+
+                  // Réinitialiser la sélection de source
+                  HexRiviereSource := 0;
+
+                  // Mettre à jour la sélection pour l'affichage des infos
+                  for j := 1 to TotalNbreHex do
+                    HexGrid[j].Selected := False;
+                  HexGrid[i].Selected := True;
+                  SelectedHex := HexGrid[i];
+                  HexSelected := True;
                 end;
               end;
             end;

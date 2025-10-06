@@ -136,13 +136,13 @@ var
   x, y, i: Integer;
   offsetX, offsetY: Single;
   horizontalSpacing, verticalSpacing: Single;
-  oldSupprime: array of Boolean;  // NOUVEAU: Sauvegarder les états de suppression
-  oldTypeTerrainExist: Boolean;   // NOUVEAU: Vérifier si on a des données existantes
+  oldSupprime: array of Boolean;
+  oldTypeTerrainExist: Boolean;
 begin
-  // NOUVEAU: Vérifier si on a déjà des données dans HexGrid
+  // Vérifier si on a déjà des données dans HexGrid
   oldTypeTerrainExist := (Length(HexGrid) > 0) and (TotalNbreHex > 0);
 
-  // NOUVEAU: Sauvegarder les états de suppression existants
+  // Sauvegarder les états de suppression existants
   if oldTypeTerrainExist then
   begin
     SetLength(oldSupprime, TotalNbreHex + 1);
@@ -184,33 +184,43 @@ begin
       case HexOrientation of
         hoFlatTop:
         begin
-          // CORRECTION : Calculer la position relative à l'hexagone 1
+          // Calculer la position relative à l'hexagone 1
           offsetX := Hex1ReferenceX + (x - 1) * horizontalSpacing;
           offsetY := Hex1ReferenceY + (y - 1) * verticalSpacing;
 
-          // Décalage vertical pour colonnes impaires
-          if (x mod 2) = 1 then
+          // CORRIGÉ: Décalage vertical selon CoinIn
+          if CoinIn = False then
           begin
-            if CoinIn = true then
-              offsetY := offsetY + (hexHeight / 2)
-            else
-              offsetY := offsetY - (hexHeight / 2);
+            // CoinIn False : colonnes PAIRES décalées vers le bas
+            if (x mod 2) = 0 then
+              offsetY := offsetY + (hexHeight / 2);
+          end
+          else
+          begin
+            // CoinIn True : colonnes IMPAIRES décalées vers le bas
+            if (x mod 2) = 1 then
+              offsetY := offsetY + (hexHeight / 2);
           end;
         end;
 
         hoPointyTop:
         begin
-          // CORRECTION : Calculer la position relative à l'hexagone 1
+          // Calculer la position relative à l'hexagone 1
           offsetX := Hex1ReferenceX + (x - 1) * horizontalSpacing;
           offsetY := Hex1ReferenceY + (y - 1) * verticalSpacing;
 
-          // Décalage horizontal pour lignes impaires
-          if (y mod 2) = 1 then
+          // CORRIGÉ: Décalage horizontal selon CoinIn
+          if CoinIn = False then
           begin
-            if CoinIn = true then
-              offsetX := offsetX + (hexWidth / 2)
-            else
-              offsetX := offsetX - (hexWidth / 2);
+            // CoinIn False : lignes PAIRES décalées vers la droite
+            if (y mod 2) = 0 then
+              offsetX := offsetX + (hexWidth / 2);
+          end
+          else
+          begin
+            // CoinIn True : lignes IMPAIRES décalées vers la droite
+            if (y mod 2) = 1 then
+              offsetX := offsetX + (hexWidth / 2);
           end;
         end;
       end;
@@ -221,8 +231,7 @@ begin
       HexGrid[i].PairImpaircolonne := PairOuImpairCol(HexGrid[i].Colonne);
       HexGrid[i].PairImpairligne := PairOuImpairLigne(HexGrid[i].ligne);
 
-      // CORRECTION PRINCIPALE : Le centre est directement à la position calculée
-      // SANS ajouter hexRadius !
+      // Le centre est directement à la position calculée SANS ajouter hexRadius
       HexGrid[i].center.X := Round(offsetX);
       HexGrid[i].center.Y := Round(offsetY);
 
@@ -245,14 +254,14 @@ begin
 
       HexGrid[i].Selected := False;
 
-      // MODIFIÉ: Préserver l'état de suppression existant ou initialiser à False
+      // Préserver l'état de suppression existant ou initialiser à False
       if oldTypeTerrainExist and (i <= High(oldSupprime)) then
       begin
-        HexGrid[i].Supprime := oldSupprime[i];  // Restaurer l'état sauvegardé
+        HexGrid[i].Supprime := oldSupprime[i];
       end
       else
       begin
-        HexGrid[i].Supprime := False;  // Initialisation par défaut pour nouveaux hexagones
+        HexGrid[i].Supprime := False;
       end;
 
       CalculateHexVertices(HexGrid[i]);
@@ -266,7 +275,7 @@ begin
   GridOffsetX := Hex1ReferenceX;
   GridOffsetY := Hex1ReferenceY;
 
-  // NOUVEAU: Log du résultat
+  // Log du résultat
   if oldTypeTerrainExist then
   begin
     i := 0;
