@@ -44,6 +44,10 @@ An exemple from railroad point on the map.
 A new mode to declare rivers and size about them
 <img width="1329" height="1066" alt="image" src="https://github.com/user-attachments/assets/ad606c5c-bc2c-46c2-bf46-66641061b690" />
 
+a new mode to add a level for each hexagon. scale -2 to 5.
+<img width="1333" height="1065" alt="image" src="https://github.com/user-attachments/assets/c7050875-ae5b-4b84-ae6a-1ceaa0bc40c9" />
+
+
 
 
 
