@@ -51,20 +51,21 @@ begin
   end;
 end;
 // =============================================================================
-// FONCTION MODIFIÉE: creationbouttons
-// MODIFICATION: ToggleGroupAppMode.width réduit de 80 → 40 (moitié)
+// FICHIER 7: creationbouttons() COMPLÈTE MODIFIÉE
+// EMPLACEMENT: hexagongridflattop.lpr, remplacer la fonction existante (ligne ~58)
+// ACTION: REMPLACER TOUTE LA FONCTION par cette version
 // =============================================================================
 
 procedure creationbouttons;
 begin
-  // Boutons principaux (inchangés)
+  // =================== BOUTONS PRINCIPAUX ===================
   ButtonSave := CreateButton(windowWidth - PanelWidth + 50, 60, 200, 40, DARKBLUE, SKYBLUE, RED);
   ButtonChargerCarte := CreateButton(windowWidth - PanelWidth + 50, 110, 200, 40, DARKGREEN, GREEN, RED);
   ButtonImporterCarte := CreateButton(windowWidth - PanelWidth + 50, 160, 200, 40, PURPLE, VIOLET, RED);
   ButtonSauverCarte := CreateButton(windowWidth - PanelWidth + 50, 210, 200, 40, BROWN, ORANGE, RED);
   ButtonGenererGrille := CreateButton(windowWidth - PanelWidth + 50, 260, 200, 40, ORANGE, YELLOW, RED);
 
-  // Checkboxes (repositionnées plus bas pour éviter les conflits)
+  // =================== CHECKBOXES ===================
   CheckboxOrientation.x := windowWidth - PanelWidth + 50;
   CheckboxOrientation.y := 320;
   CheckboxOrientation.width := 20;
@@ -85,7 +86,7 @@ begin
   CheckboxCoinIn.width := 20;
   CheckboxCoinIn.height := 20;
 
-  // TextBoxes (repositionnées)
+  // =================== TEXTBOXES POUR GRILLE ===================
   TextBoxColonnes.x := windowWidth - PanelWidth + 50;
   TextBoxColonnes.y := 425;
   TextBoxColonnes.width := 80;
@@ -96,42 +97,53 @@ begin
   TextBoxLignes.width := 80;
   TextBoxLignes.height := 25;
 
-  // ============================================================================
-  // ToggleGroup Principal - LARGEUR RÉDUITE DE MOITIÉ (80 → 40)
-  // ============================================================================
+  // =================== TOGGLE GROUP PRINCIPAL ===================
+  // ⭐ MODIFIÉ: Largeur réduite de 80 → 40 pour accueillir 6 modes
   ToggleGroupAppMode.x := windowWidth - PanelWidth + 50;
   ToggleGroupAppMode.y := 465;
-  ToggleGroupAppMode.width := 40;  // ← MODIFIÉ: 80 → 40 (moitié)
+  ToggleGroupAppMode.width := 40;  // ⭐ Largeur réduite pour 6 boutons
   ToggleGroupAppMode.height := 25;
 
-  // DÉTECTION : Bouton détection (repositionné plus bas)
+  // =================== BOUTON DÉTECTION ===================
   ButtonDetection := CreateButton(windowWidth - PanelWidth + 50, 510, 200, 30, MAGENTA, RED, MAROON);
 
-  // DÉTECTION : Spinner correction (repositionné avec plus d'espace)
+  // =================== SPINNER CORRECTION (MODE DÉTECTION) ===================
   SpinnerCorrection.x := windowWidth - PanelWidth + 50;
   SpinnerCorrection.y := 565;
   SpinnerCorrection.width := 100;
   SpinnerCorrection.height := 25;
 
-  // NOUVEAU: ToggleGroup Suppression (placé à Y=615 sous le spinner de détection)
+  // =================== TOGGLE GROUP SUPPRESSION ===================
   ToggleGroupSuppression.x := windowWidth - PanelWidth + 50;
   ToggleGroupSuppression.y := 615;
   ToggleGroupSuppression.width := 100;
   ToggleGroupSuppression.height := 25;
 
-  // ============================================================================
-  // NOUVEAU: Spinner pour les objets/items (Mode Item)
-  // ============================================================================
+  // =================== SPINNER OBJET (MODE ITEM) ===================
   SpinnerObjet.x := windowWidth - PanelWidth + 50;
   SpinnerObjet.y := 525;
   SpinnerObjet.width := 100;
   SpinnerObjet.height := 25;
 
+  // =================== SPINNER RIVIÈRE (MODE RIVIÈRE) ===================
   SpinnerRiviere.x := windowWidth - PanelWidth + 50;
-SpinnerRiviere.y := 520;
-SpinnerRiviere.width := 100;
-SpinnerRiviere.height := 25;
+  SpinnerRiviere.y := 520;
+  SpinnerRiviere.width := 100;
+  SpinnerRiviere.height := 25;
+
+  // =================== ⭐ NOUVEAU: SPINNER HAUTEUR (MODE HAUTEUR) ===================
+  SpinnerHauteur.x := windowWidth - PanelWidth + 50;
+  SpinnerHauteur.y := 520;
+  SpinnerHauteur.width := 100;
+  SpinnerHauteur.height := 25;
 end;
+
+// =============================================================================
+// RÉSUMÉ DES MODIFICATIONS:
+// 1. ToggleGroupAppMode.width réduit de 80 → 40 (pour afficher 6 modes)
+// 2. Ajout du SpinnerHauteur (position Y=520, même que SpinnerRiviere)
+// 3. Tous les autres éléments restent inchangés
+// =============================================================================
 
 procedure DrawImportSelector;
 var
@@ -283,16 +295,13 @@ begin
   RecalculerDimensionsHex;
   GenerateHexagons;
   CalculateNeighbors;
+  //InitialiserHauteurs;
 end;
 
 // =============================================================================
-// FONCTION MODIFIÉE: DrawGUIPanel
-// AJOUT: Interface pour le mode Item
-// MODIFICATION: ToggleGroup avec 4 modes (Normal, Détection, Suppression, Item)
-// =============================================================================
-
-// =============================================================================
-// REMPLACER DrawGUIPanel() dans hexagongridflattop.lpr (ligne ~318)
+// FICHIER 8: DrawGUIPanel() COMPLÈTE MODIFIÉE
+// EMPLACEMENT: hexagongridflattop.lpr, remplacer la fonction existante (ligne ~298)
+// ACTION: REMPLACER TOUTE LA FONCTION par cette version
 // =============================================================================
 
 procedure DrawGUIPanel();
@@ -366,9 +375,9 @@ begin
   if GuivalueBox(TextBoxLignes, '', @rows, 2,100,editingLignes)<>0 then editingLignes:=NOT editingLignes;
 
   // =================== TOGGLE GROUP PRINCIPAL ===================
-  // MODIFIÉ: 5 modes (ajout de Riviere)
+  // ⭐ MODIFIÉ: 6 modes (ajout de Hauteur)
   oldAppModeIndex := AppModeIndex;
-  GuiToggleGroup(ToggleGroupAppMode, 'Normal;Détection;Suppression;Item;Riviere', @AppModeIndex);
+  GuiToggleGroup(ToggleGroupAppMode, 'Normal;Détection;Suppression;Item;Riviere;Hauteur', @AppModeIndex);
 
   if AppModeIndex <> oldAppModeIndex then
   begin
@@ -377,7 +386,8 @@ begin
       1: AppMode := amDetection;
       2: AppMode := amSuppression;
       3: AppMode := amObjet;
-      4: AppMode := amRiviere;  // NOUVEAU
+      4: AppMode := amRiviere;
+      5: AppMode := amHauteur;  // ⭐ NOUVEAU: case 5 = mode Hauteur
     end;
   end;
 
@@ -478,15 +488,12 @@ begin
     DrawText('plusieurs items simultanément', windowWidth - PanelWidth + 50, 685, 11, DARKGRAY);
   end;
 
-  // ============================================================================
-  // NOUVEAU: INTERFACE RIVIÈRE
-  // ============================================================================
+  // =================== INTERFACE RIVIÈRE ===================
   if AppMode = amRiviere then
   begin
     DrawText('Mode Rivière actif:', windowWidth - PanelWidth + 50, 495, 14, RED);
 
-    // Spinner pour sélectionner le type (1-5)
-    GuiSpinner(SpinnerRiviere, '', @ValeurSpinnerRiviere, 1, 5, False);
+    GuiSpinner(SpinnerRiviere, '', @ValeurSpinnerRiviere, 0, 10, False); // 10 falaise, 1à 5 largeur riviere
 
     DrawText(PChar('Type: riv' + IntToStr(ValeurSpinnerRiviere)),windowWidth - PanelWidth + 160, 515, 12, DARKGRAY);
 
@@ -500,6 +507,29 @@ begin
     DrawText('', windowWidth - PanelWidth + 50, 655, 12, DARKGRAY);
     DrawText('Épaisseur = valeur spinner', windowWidth - PanelWidth + 50, 670, 11, DARKGRAY);
     DrawText('(1-5 pixels)', windowWidth - PanelWidth + 50, 685, 11, DARKGRAY);
+  end;
+
+  // =================== ⭐ NOUVEAU: INTERFACE HAUTEUR ===================
+  if AppMode = amHauteur then
+  begin
+    DrawText('Mode Hauteur actif:', windowWidth - PanelWidth + 50, 495, 14, DARKGREEN);
+
+    // Spinner pour sélectionner la hauteur (0-99)
+    GuiSpinner(SpinnerHauteur, '', @ValeurSpinnerHauteur, -2, 10, False);
+
+    DrawText(PChar('Hauteur: ' + IntToStr(ValeurSpinnerHauteur)),
+             windowWidth - PanelWidth + 160, 515, 12, DARKBLUE);
+
+    DrawText('Instructions:', windowWidth - PanelWidth + 50, 545, 12, DARKGRAY);
+    DrawText('1. Sélectionnez la hauteur (0-99)', windowWidth - PanelWidth + 50, 565, 12, DARKGRAY);
+    DrawText('2. Cliquez sur un hexagone', windowWidth - PanelWidth + 50, 580, 12, DARKGRAY);
+    DrawText('   → Applique la hauteur', windowWidth - PanelWidth + 50, 595, 12, DARKGRAY);
+    DrawText('', windowWidth - PanelWidth + 50, 610, 12, DARKGRAY);
+    DrawText('Affichage:', windowWidth - PanelWidth + 50, 625, 12, DARKGRAY);
+    DrawText('Le chiffre affiché = hauteur', windowWidth - PanelWidth + 50, 640, 12, DARKGRAY);
+    DrawText('', windowWidth - PanelWidth + 50, 655, 12, DARKGRAY);
+    DrawText('Hauteur 0 = terrain plat', windowWidth - PanelWidth + 50, 670, 11, DARKGRAY);
+    DrawText('Hauteur 99 = montagne haute', windowWidth - PanelWidth + 50, 685, 11, DARKGRAY);
   end;
 
   // =================== INFORMATIONS GÉNÉRALES ===================
@@ -519,7 +549,7 @@ begin
   DrawText(PChar('Grille: ' + IntToStr(columns) + 'x' + IntToStr(rows) + ' (' + IntToStr(TotalNbreHex) + ' hex)'),
            windowWidth - PanelWidth + 50, 775, 14, DARKGREEN);
 
-  // MODIFIÉ: Ajout du cas amRiviere
+  // ⭐ MODIFIÉ: Ajout du cas amHauteur
   case AppMode of
     amNormal: DrawText('Mode actuel: Normal', windowWidth - PanelWidth + 50, 795, 14, DARKGREEN);
     amDetection: DrawText('Mode actuel: Détection', windowWidth - PanelWidth + 50, 795, 14, ORANGE);
@@ -531,7 +561,8 @@ begin
       end;
     end;
     amObjet: DrawText('Mode actuel: Item', windowWidth - PanelWidth + 50, 795, 14, BLUE);
-    amRiviere: DrawText('Mode actuel: Rivière', windowWidth - PanelWidth + 50, 795, 14, RED);  // NOUVEAU
+    amRiviere: DrawText('Mode actuel: Rivière', windowWidth - PanelWidth + 50, 795, 14, RED);
+    amHauteur: DrawText('Mode actuel: Hauteur', windowWidth - PanelWidth + 50, 795, 14, DARKGREEN);  // ⭐ NOUVEAU
   end;
 
   // =================== MESSAGEBOX DE RÉINITIALISATION ===================
@@ -559,6 +590,14 @@ begin
     end;
   end;
 end;
+
+// =============================================================================
+// RÉSUMÉ DES MODIFICATIONS:
+// 1. ToggleGroup: Ajout de ";Hauteur" (6 modes au total)
+// 2. Case statement: Ajout de "5: AppMode := amHauteur;"
+// 3. Interface Hauteur: Section complète avec spinner (0-99) et instructions
+// 4. Affichage mode actuel: Ajout de "amHauteur: DrawText..."
+// =============================================================================
 
 procedure DrawHexagon2(hex: THexCell);
 var
@@ -658,14 +697,10 @@ begin
   end;
 end;
 
-// =============================================================================
-// FONCTION MODIFIÉE: DrawHexGrid
-// AJOUT: Affichage des ronds rouges pour le mode Item
-// =============================================================================
-
-// =============================================================================
-// FONCTION COMPLÈTE CORRIGÉE: DrawHexGrid
-// CORRECTION: Traits rouges affichés UNIQUEMENT en mode Rivière
+//// =============================================================================
+// FICHIER 10: DrawHexGrid() COMPLÈTE MODIFIÉE
+// EMPLACEMENT: hexagongridflattop.lpr, remplacer la fonction existante (ligne ~671)
+// ACTION: REMPLACER TOUTE LA FONCTION par cette version
 // =============================================================================
 
 procedure DrawHexGrid(dessineLesNombres: boolean);
@@ -677,15 +712,19 @@ var
   j, voisin: Integer;
   epaisseur: Single;
 begin
+  // Déterminer l'angle de rotation selon l'orientation
   case HexOrientation of
     hoFlatTop:   rotationAngle := 0;
     hoPointyTop: rotationAngle := 30;
   end;
 
+  // Afficher les numéros sauf en mode Détection
   showNumbers := dessineLesNombres and (AppMode <> amDetection);
 
+  // =================== DESSIN DES HEXAGONES ===================
   for i := 1 to TotalNbreHex do
   begin
+    // Gestion de la visibilité selon le mode
     case AppMode of
       amNormal, amDetection:
       begin
@@ -709,8 +748,16 @@ begin
         if HexGrid[i].Supprime then
           Continue;
       end;
+
+      // ⭐ NOUVEAU: Mode Hauteur
+      amHauteur:
+      begin
+        if HexGrid[i].Supprime then
+          Continue;
+      end;
     end;
 
+    // Dessiner le polygone hexagonal si la grille n'est pas transparente
     if lacarte.grilletransparente = False then
     begin
       DrawPoly(Vector2Create(HexGrid[i].Center.x, HexGrid[i].Center.y),
@@ -722,18 +769,21 @@ begin
         outlineColor := raywhite;
     end;
 
+    // Déterminer la couleur du contour selon le mode
     if (AppMode = amDetection) and (HexGrid[i].IsReference > 0) then
       outlineColor := RED
     else if (AppMode = amSuppression) and HexGrid[i].Supprime then
       outlineColor := RED
     else if (AppMode = amRiviere) and (i = HexRiviereSource) then
-      outlineColor := ORANGE  // Hex source en orange
+      outlineColor := ORANGE
     else
       outlineColor := orange;
 
+    // Dessiner le contour de l'hexagone
     DrawPolyLinesEx(Vector2Create(HexGrid[I].Center.x, HexGrid[I].Center.y),
                     6, HexRadius, rotationAngle, 2, outlineColor);
 
+    // Afficher les numéros d'hexagones (mode normal)
     if showNumbers and not HexGrid[i].Supprime then
     begin
       StrPCopy(hexNumberText, IntToStr(HexGrid[I].Number));
@@ -743,6 +793,9 @@ begin
                20, BLACK);
     end;
 
+    // =================== AFFICHAGES SPÉCIFIQUES PAR MODE ===================
+
+    // MODE DÉTECTION : Afficher les numéros de référence ou de type terrain
     if (AppMode = amDetection) and not HexGrid[i].Supprime then
     begin
       if HexGrid[i].IsReference > 0 then
@@ -763,6 +816,7 @@ begin
       end;
     end;
 
+    // MODE SUPPRESSION : Afficher X pour hexagones supprimés
     if (AppMode = amSuppression) and HexGrid[i].Supprime then
     begin
       DrawText('X',
@@ -771,6 +825,7 @@ begin
                24, RED);
     end;
 
+    // MODE SUPPRESSION : Afficher O pour hexagones exempts
     if (AppMode = amSuppression) and HexGrid[i].Exempt then
     begin
       DrawText('O',
@@ -779,19 +834,27 @@ begin
                24, RED);
     end;
 
-    // Affichage des ronds rouges pour le mode Item
+    // MODE OBJET : Afficher ronds rouges pour objets actifs
     if (AppMode = amObjet) and HexGrid[i].Objets[ValeurSpinnerObjet] then
     begin
       DrawCircle(Round(HexGrid[I].Center.x),
                  Round(HexGrid[I].Center.y),
                  5, RED);
     end;
+
+    // ⭐ NOUVEAU: MODE HAUTEUR - Afficher le chiffre de hauteur
+    if (AppMode = amHauteur) and not HexGrid[i].Supprime then
+    begin
+      StrPCopy(hexNumberText, IntToStr(HexGrid[i].Hauteur));
+      DrawText(hexNumberText,
+               Round(HexGrid[I].Center.x - 8),
+               Round(HexGrid[I].Center.y - 12),
+               20, red);
+    end;
   end;
 
-  // ============================================================================
-  // CORRIGÉ: Affichage des traits rouges UNIQUEMENT en mode Rivière
-  // ============================================================================
-  if AppMode = amRiviere then  // ← CONDITION AJOUTÉE !
+  // =================== DESSIN DES RIVIÈRES (UNIQUEMENT EN MODE RIVIÈRE) ===================
+  if AppMode = amRiviere then
   begin
     for i := 1 to TotalNbreHex do
     begin
@@ -818,6 +881,17 @@ begin
     end;
   end;
 end;
+
+// =============================================================================
+// RÉSUMÉ DES MODIFICATIONS:
+// 1. Ajout du case "amHauteur:" dans la gestion de visibilité
+// 2. Nouvelle section d'affichage pour le mode Hauteur:
+//    - Affiche le chiffre de hauteur (HexGrid[i].Hauteur)
+//    - Couleur DARKGREEN pour bien le distinguer
+//    - Taille 20 pour lisibilité
+//    - Positionné au centre de l'hexagone
+// 3. N'affiche pas les hauteurs pour les hexagones supprimés
+// =============================================================================
 
 procedure HandleKeyboardAdjustments;
 var
@@ -1074,6 +1148,12 @@ end;
 // REMPLACER HandleDragAndDrop() dans hexagongridflattop.lpr (ligne ~1037)
 // =============================================================================
 
+// =============================================================================
+// FICHIER 9: HandleDragAndDrop() COMPLÈTE MODIFIÉE
+// EMPLACEMENT: hexagongridflattop.lpr, remplacer la fonction existante (ligne ~1077)
+// ACTION: REMPLACER TOUTE LA FONCTION par cette version
+// =============================================================================
+
 procedure HandleDragAndDrop();
 var
   mousePos: TVector2;
@@ -1086,10 +1166,11 @@ var
   ancienVoisin: Integer;
   newHex1RefX, newHex1RefY: Single;
   deltaRefX, deltaRefY: Single;
-  coteSource, coteDest: Integer;  // NOUVEAU: pour les rivières
+  coteSource, coteDest: Integer;
 begin
   mousePos := GetMousePosition();
 
+  // =================== GESTION DU DÉBUT DU DRAG ===================
   if IsMouseButtonPressed(MOUSE_LEFT_BUTTON) then
   begin
     if (mousePos.x < windowWidth - PanelWidth) and (mousePos.y < windowHeight - InfoBoxHeight) then
@@ -1103,6 +1184,7 @@ begin
     end;
   end;
 
+  // =================== GESTION DU DRAG EN COURS ===================
   if IsMouseButtonDown(MOUSE_LEFT_BUTTON) then
   begin
     deltaX := mousePos.x - DragStartPos.x;
@@ -1141,6 +1223,7 @@ begin
     end;
   end;
 
+  // =================== GESTION DE LA FIN DU DRAG (CLIC OU DROP) ===================
   if IsMouseButtonReleased(MOUSE_LEFT_BUTTON) then
   begin
     if IsDragging then
@@ -1150,11 +1233,13 @@ begin
     end
     else
     begin
+      // C'était un CLIC, pas un drag
       mouseX := GetMouseX();
       mouseY := GetMouseY();
 
       if (mouseX < windowWidth - PanelWidth) and (mouseY < windowHeight - InfoBoxHeight) then
       begin
+        // Détecter quel hexagone a été cliqué
         for i := 1 to TotalNbreHex do
         begin
           dx := mouseX - HexGrid[i].Center.x;
@@ -1163,7 +1248,9 @@ begin
 
           if dist <= HexRadius - decalageRayon then
           begin
+            // =================== GESTION DES CLICS PAR MODE ===================
             case AppMode of
+              // =================== MODE NORMAL ===================
               amNormal:
               begin
                 for j := 1 to TotalNbreHex do
@@ -1173,6 +1260,7 @@ begin
                 HexSelected := True;
               end;
 
+              // =================== MODE DÉTECTION ===================
               amDetection:
               begin
                 if DetectionActive then
@@ -1202,6 +1290,7 @@ begin
                 end;
               end;
 
+              // =================== MODE SUPPRESSION ===================
               amSuppression:
               begin
                 case AppModeSuppressionIndex of
@@ -1270,6 +1359,7 @@ begin
                 end;
               end;
 
+              // =================== MODE OBJET/ITEM ===================
               amObjet:
               begin
                 HexGrid[i].Objets[ValeurSpinnerObjet] := not HexGrid[i].Objets[ValeurSpinnerObjet];
@@ -1286,16 +1376,12 @@ begin
                 HexSelected := True;
               end;
 
-              // ============================================================================
-              // NOUVEAU: Gestion du mode Rivière (2 clics successifs)
-              // ============================================================================
+              // =================== MODE RIVIÈRE ===================
               amRiviere:
               begin
                 if HexRiviereSource = 0 then
                 begin
-                  // ========================================
                   // PREMIER CLIC - Sélectionner la source
-                  // ========================================
                   HexRiviereSource := i;
                   WriteLn('Riviere: Source selectionnee #' + IntToStr(i));
 
@@ -1307,32 +1393,23 @@ begin
                 end
                 else
                 begin
-                  // ========================================
                   // DEUXIÈME CLIC - Placer ou supprimer la rivière
-                  // ========================================
-                  // Vérifier si les hexagones sont adjacents
                   coteSource := TrouverAreteCommuneEntreVoisins(HexRiviereSource, i);
 
                   if coteSource > 0 then
                   begin
-                    // Les hexagones sont adjacents
                     coteDest := CoteOppose(coteSource);
 
-                    // Vérifier si une rivière existe déjà
                     if HexGrid[HexRiviereSource].Edges[coteSource] > 0 then
                     begin
-                      // ========================================
                       // SUPPRESSION - Rivière existe déjà
-                      // ========================================
                       HexGrid[HexRiviereSource].Edges[coteSource] := 0;
                       HexGrid[i].Edges[coteDest] := 0;
                       WriteLn('Riviere supprimee entre #' + IntToStr(HexRiviereSource) + ' et #' + IntToStr(i));
                     end
                     else
                     begin
-                      // ========================================
                       // PLACEMENT - Nouvelle rivière
-                      // ========================================
                       HexGrid[HexRiviereSource].Edges[coteSource] := ValeurSpinnerRiviere;
                       HexGrid[i].Edges[coteDest] := ValeurSpinnerRiviere;
                       WriteLn('Riviere type ' + IntToStr(ValeurSpinnerRiviere) + ' placee entre #' + IntToStr(HexRiviereSource) + ' et #' + IntToStr(i));
@@ -1340,22 +1417,33 @@ begin
                   end
                   else
                   begin
-                    // ========================================
-                    // ERREUR - Les hexagones ne sont pas voisins
-                    // ========================================
                     WriteLn('ERREUR: Les hexagones #' + IntToStr(HexRiviereSource) + ' et #' + IntToStr(i) + ' ne sont pas adjacents');
                   end;
 
-                  // Réinitialiser la sélection de source
                   HexRiviereSource := 0;
 
-                  // Mettre à jour la sélection pour l'affichage des infos
                   for j := 1 to TotalNbreHex do
                     HexGrid[j].Selected := False;
                   HexGrid[i].Selected := True;
                   SelectedHex := HexGrid[i];
                   HexSelected := True;
                 end;
+              end;
+
+              // =================== ⭐ NOUVEAU: MODE HAUTEUR ===================
+              amHauteur:
+              begin
+                // Appliquer la hauteur sélectionnée à l'hexagone cliqué
+                HexGrid[i].Hauteur := ValeurSpinnerHauteur;
+
+                WriteLn('Hauteur ' + IntToStr(ValeurSpinnerHauteur) + ' appliquée à l''hexagone #' + IntToStr(i));
+
+                // Mettre à jour la sélection
+                for j := 1 to TotalNbreHex do
+                  HexGrid[j].Selected := False;
+                HexGrid[i].Selected := True;
+                SelectedHex := HexGrid[i];
+                HexSelected := True;
               end;
             end;
 
@@ -1368,6 +1456,14 @@ begin
     IsDragging := False;
   end;
 end;
+
+// =============================================================================
+// RÉSUMÉ DES MODIFICATIONS:
+// - Ajout du case "amHauteur:" dans le switch principal
+// - Simple application de la valeur du spinner à l'hexagone cliqué
+// - Mise à jour de la sélection visuelle
+// - Message de log confirmant l'application
+// =============================================================================
 
 procedure DrawMap();
 begin

@@ -24,7 +24,7 @@ const
 
 type
   THexOrientation = (hoFlatTop, hoPointyTop);
-  TAppMode = (amNormal, amDetection, amSuppression, amObjet, amRiviere);
+   TAppMode = (amNormal, amDetection, amSuppression, amObjet, amRiviere, amHauteur);
   TTypeCarteActive = (tcAucune, tcImportee, tcChargee);
 
    TColorCount = record
@@ -102,6 +102,8 @@ var
   extension: string;
   copieReussie: Boolean;
 
+
+
 type
   TPoint = record
     x, y: integer;
@@ -156,6 +158,7 @@ type
     Exempt: Boolean;// pour avoir un hexagone valide mais pas accessible.
     Objets: array[1..10] of Boolean;  // Les 10 objets possibles
      Edges: array[1..6] of Integer;  // Type de rivière (0-5) sur les 6 côtés
+     Hauteur: Integer;  // <--- NOUVEAU CHAMP AJOUTÉ
 
   end;
 
@@ -210,7 +213,9 @@ ValeurSpinnerObjet: Integer = 1;       // Valeur sélectionnée (1-10)
    SpinnerRiviere: TRectangle;
 ValeurSpinnerRiviere: Integer = 1;  // Valeur 1 à 5
 HexRiviereSource: Integer = 0;      // 0 = aucun hex sélectionné
-
+    // NOUVELLES VARIABLES POUR MODE HAUTEUR
+  SpinnerHauteur: TRectangle;
+  ValeurSpinnerHauteur: Integer = 0;  // Valeur par défaut = niveau de la mer
 // Procédures pour gérer les dimensions dynamiques
 procedure RecalculerDimensionsHex;
 procedure AppliquerEchelle(NouvelleEchelle: Single);
@@ -237,9 +242,27 @@ procedure RedimensionnerHexGrid;
 procedure GenererNouvelleGrille;
 function AppliquerParametresGrille: boolean;
 procedure SaveHexGridToCSV();
+procedure InitialiserHauteurs;
 
 implementation
 uses HexagonLogic;
+
+// =============================================================================
+// FONCTION COMPLÈTE : InitialiserHauteurs
+// Initialise toutes les hauteurs des hexagones à 0
+// =============================================================================
+
+procedure InitialiserHauteurs;
+var
+  i: Integer;
+begin
+  WriteLn('=== Initialisation des hauteurs ===');
+  for i := 1 to TotalNbreHex do
+  begin
+    HexGrid[i].Hauteur := 0;  // Niveau de la mer par défaut
+  end;
+  WriteLn('Toutes les hauteurs initialisées à 0 (niveau mer)');
+end;
 
 // =============================================================================
 // REMPLACER SaveHexGridToCSV() dans initvariable.pas (ligne ~241)
@@ -261,12 +284,12 @@ begin
   AssignFile(F, fichierCSV);
   Rewrite(F);
   try
-    // MODIFIÉ: Ajout edge1 à edge6
+    // MODIFIÉ: Ajout de la colonne Hauteur après edge6
     Writeln(F, 'Number,CenterX,CenterY,ColorR,ColorG,ColorB,ColorPtR,ColorPtG,ColorPtB,BSelected,Colonne,Ligne,Emplacement,PairImpairLigne,' +
                'Vertex1X,Vertex1Y,Vertex2X,Vertex2Y,Vertex3X,Vertex3Y,Vertex4X,Vertex4Y,Vertex5X,Vertex5Y,Vertex6X,Vertex6Y,' +
                'Neighbor1,Neighbor2,Neighbor3,Neighbor4,Neighbor5,Neighbor6,TypeTerrain,IsReference,Supprime,Exempt,' +
                'objet1,objet2,objet3,objet4,objet5,objet6,objet7,objet8,objet9,objet10,' +
-               'edge1,edge2,edge3,edge4,edge5,edge6');
+               'edge1,edge2,edge3,edge4,edge5,edge6,Hauteur');  // <--- AJOUT Hauteur
 
     for i := 1 to TotalNbreHex do
     begin
@@ -287,7 +310,7 @@ begin
         ObjetsStr := ObjetsStr + BoolToStr(HexGrid[i].Objets[j], True);
       end;
 
-      // NOUVEAU: Construction edges
+      // Construction edges
       EdgesStr := '';
       for j := 1 to 6 do
       begin
@@ -295,7 +318,8 @@ begin
         EdgesStr := EdgesStr + IntToStr(HexGrid[i].Edges[j]);
       end;
 
-      Writeln(F, Format('%d,%d,%d,%d,%d,%d,%d,%d,%d,%s,%d,%d,%s,%s,%s,%s,%d,%d,%s,%s,%s,%s',
+      // MODIFIÉ: Ajout de la hauteur à la fin
+      Writeln(F, Format('%d,%d,%d,%d,%d,%d,%d,%d,%d,%s,%d,%d,%s,%s,%s,%s,%d,%d,%s,%s,%s,%s,%d',
         [HexGrid[i].Number,
          Round(HexGrid[i].Center.x), Round(HexGrid[i].Center.y),
          HexGrid[i].Color.r, HexGrid[i].Color.g, HexGrid[i].Color.b,
@@ -309,7 +333,8 @@ begin
          HexGrid[i].TypeTerrain, HexGrid[i].IsReference,
          BoolToStr(HexGrid[i].Supprime, True), BoolToStr(HexGrid[i].Exempt, True),
          ObjetsStr,
-         EdgesStr]));  // NOUVEAU
+         EdgesStr,
+         HexGrid[i].Hauteur]));  // <--- AJOUT Hauteur
     end;
 
     CloseFile(F);
@@ -382,8 +407,8 @@ begin
       elements[elementCount] := Copy(ligne, startPos, Length(ligne) - startPos + 1);
       Inc(elementCount);
 
-      // NOUVEAU: 52 colonnes (36 base + 10 objets + 6 edges)
-      if elementCount >= 52 then
+      // NOUVEAU: 53 colonnes (36 base + 10 objets + 6 edges + 1 hauteur)
+      if elementCount >= 53 then
       begin
         try
           hexNumber := StrToInt(Trim(elements[0]));
@@ -403,9 +428,12 @@ begin
             for j := 1 to 10 do
               HexGrid[hexNumber].Objets[j] := (Trim(elements[35 + j]) = 'True') or (Trim(elements[35 + j]) = '-1');
 
-            // NOUVEAU: Charger edges (46-51)
+            // Charger edges (46-51)
             for j := 1 to 6 do
               HexGrid[hexNumber].Edges[j] := StrToIntDef(Trim(elements[45 + j]), 0);
+
+            // NOUVEAU: Charger hauteur (52)
+            HexGrid[hexNumber].Hauteur := StrToIntDef(Trim(elements[52]), 0);
 
             if isReference > 0 then
               Inc(loadedReferences);
@@ -419,7 +447,47 @@ begin
           end;
         end;
       end
-      // Anciens fichiers avec objets mais sans edges (46 colonnes)
+      // Fichiers avec objets et edges mais sans hauteur (52 colonnes)
+      else if elementCount >= 52 then
+      begin
+        try
+          hexNumber := StrToInt(Trim(elements[0]));
+          typeTerrain := StrToInt(Trim(elements[32]));
+          isReference := StrToInt(Trim(elements[33]));
+          supprime := (Trim(elements[34]) = 'True') or (Trim(elements[34]) = '-1');
+          exempt := (Trim(elements[35]) = 'True') or (Trim(elements[35]) = '-1');
+
+          if (hexNumber >= 1) and (hexNumber <= TotalNbreHex) then
+          begin
+            HexGrid[hexNumber].TypeTerrain := typeTerrain;
+            HexGrid[hexNumber].IsReference := isReference;
+            HexGrid[hexNumber].Supprime := supprime;
+            HexGrid[hexNumber].Exempt := exempt;
+
+            // Charger objets (36-45)
+            for j := 1 to 10 do
+              HexGrid[hexNumber].Objets[j] := (Trim(elements[35 + j]) = 'True') or (Trim(elements[35 + j]) = '-1');
+
+            // Charger edges (46-51)
+            for j := 1 to 6 do
+              HexGrid[hexNumber].Edges[j] := StrToIntDef(Trim(elements[45 + j]), 0);
+
+            // Initialiser hauteur à 0
+            HexGrid[hexNumber].Hauteur := 0;
+
+            if isReference > 0 then
+              Inc(loadedReferences);
+          end;
+
+        except
+          on E: Exception do
+          begin
+            WriteLn('Erreur parsing ligne hex: ' + elements[0]);
+            Continue;
+          end;
+        end;
+      end
+      // Anciens fichiers avec objets mais sans edges ni hauteur (46 colonnes)
       else if elementCount >= 46 then
       begin
         try
@@ -443,6 +511,9 @@ begin
             for j := 1 to 6 do
               HexGrid[hexNumber].Edges[j] := 0;
 
+            // Initialiser hauteur à 0
+            HexGrid[hexNumber].Hauteur := 0;
+
             if isReference > 0 then
               Inc(loadedReferences);
           end;
@@ -455,7 +526,7 @@ begin
           end;
         end;
       end
-      // Anciens fichiers sans objets ni edges (36 colonnes)
+      // Anciens fichiers sans objets ni edges ni hauteur (36 colonnes)
       else if elementCount >= 36 then
       begin
         try
@@ -477,6 +548,9 @@ begin
 
             for j := 1 to 6 do
               HexGrid[hexNumber].Edges[j] := 0;
+
+            // Initialiser hauteur à 0
+            HexGrid[hexNumber].Hauteur := 0;
 
             if isReference > 0 then
               Inc(loadedReferences);
@@ -512,6 +586,9 @@ begin
             for j := 1 to 6 do
               HexGrid[hexNumber].Edges[j] := 0;
 
+            // Initialiser hauteur à 0
+            HexGrid[hexNumber].Hauteur := 0;
+
             if isReference > 0 then
               Inc(loadedReferences);
           end;
@@ -530,7 +607,7 @@ begin
 
     WriteLn('Données chargées avec succès:');
     WriteLn('- Références: ' + IntToStr(loadedReferences));
-    WriteLn('- TypeTerrain, Supprime, Exempt, Objets et Edges restaurés');
+    WriteLn('- TypeTerrain, Supprime, Exempt, Objets, Edges et Hauteurs restaurés');
 
     Result := True;
 
@@ -748,12 +825,16 @@ begin
   GenerateHexagons;
   CalculateNeighbors;
 
-  // 3. Réactiver l'affichage
+  // ⭐ NOUVEAU: 3. Initialiser toutes les hauteurs à 0
+  InitialiserHauteurs;
+
+  // 4. Réactiver l'affichage
   AfficherGrille := true;
 
   WriteLn('Nouvelle grille générée: ' + IntToStr(columns) + 'x' + IntToStr(rows) +
           ' CoinIn=' + BoolToStr(CoinIn, true));
 end;
+
 
 function AppliquerParametresGrille: boolean;
 var
