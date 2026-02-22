@@ -47,6 +47,14 @@ A new mode to declare rivers and size about them
 a new mode to add a level for each hexagon. scale -2 to 5.
 <img width="1333" height="1065" alt="image" src="https://github.com/user-attachments/assets/c7050875-ae5b-4b84-ae6a-1ceaa0bc40c9" />
 
+2 new modes : first one road ways and coomunications.
+<img width="1330" height="1035" alt="image" src="https://github.com/user-attachments/assets/29fa0140-08c2-4b0d-8345-85c8ea6bb219" />
+
+the second mode to deny access between 2 adjacents hexagons.
+<img width="1335" height="862" alt="image" src="https://github.com/user-attachments/assets/5a0389b1-47bc-4a18-9b4d-25560d4acd00" />
+
+
+
 
 
 
