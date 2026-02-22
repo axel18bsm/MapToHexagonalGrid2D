@@ -24,8 +24,7 @@ const
 
 type
   THexOrientation = (hoFlatTop, hoPointyTop);
-   TAppMode = (amNormal, amDetection, amSuppression, amObjet, amRiviere, amHauteur);
-  TTypeCarteActive = (tcAucune, tcImportee, tcChargee);
+  TAppMode = (amNormal, amDetection, amSuppression, amObjet, amRiviere, amHauteur, amInfR, amVoies);  TTypeCarteActive = (tcAucune, tcImportee, tcChargee);
 
    TColorCount = record
     Color: TColor;
@@ -159,7 +158,8 @@ type
     Objets: array[1..10] of Boolean;  // Les 10 objets possibles
      Edges: array[1..6] of Integer;  // Type de rivière (0-5) sur les 6 côtés
      Hauteur: Integer;  // <--- NOUVEAU CHAMP AJOUTÉ
-
+     InfR: array[1..6] of Integer;  // 0 = franchissable, 5 = infranchissable
+     Voies: array[1..6] of Integer;  // 0=aucune, valeur décimale positionnelle 1/10/100/1000
   end;
 
   type
@@ -216,7 +216,31 @@ HexRiviereSource: Integer = 0;      // 0 = aucun hex sélectionné
     // NOUVELLES VARIABLES POUR MODE HAUTEUR
   SpinnerHauteur: TRectangle;
   ValeurSpinnerHauteur: Integer = 0;  // Valeur par défaut = niveau de la mer
-// Procédures pour gérer les dimensions dynamiques
+  // nouvelles variables pour infrachissable
+  HexInfRSource: Integer = 0;       // 0 = aucun hex sélectionné (1er clic)
+ToggleGroupModeAvance: TRectangle; // 2ème barre de toggle (InfR + futur)
+AppModeAvanceIndex: Integer = -1;  // -1 = aucun mode avancé actif
+
+VoieEpaisseur: Integer = 2;    // Multiplicateur épaisseur : voie1=2px, voie2=4px,
+                                 // voie3=6px, voie4=8px. Changer en 3 si trop fin.
+
+ // =================== VARIABLES MODE VOIES ===================
+ HexVoiesSource: Integer = 0;   // 0=aucun hex sélectionné, sinon numéro du 1er hex cliqué
+
+ // Cases à cocher pour sélectionner les voies à poser
+ CheckVoie1: Boolean = False;   // Voie1 : sentier   2px DARKGRAY
+ CheckVoie2: Boolean = False;   // Voie2 : route     4px BLUE
+ CheckVoie3: Boolean = False;   // Voie3 : nationale 6px YELLOW
+ CheckVoie4: Boolean = False;   // Voie4 : fer       8px RED
+
+ // Rectangles GUI pour les 4 checkboxes (positionnés dans creationbouttons)
+ CheckboxVoie1: TRectangle;
+ CheckboxVoie2: TRectangle;
+ CheckboxVoie3: TRectangle;
+ CheckboxVoie4: TRectangle;
+
+
+  // Procédures pour gérer les dimensions dynamiques
 procedure RecalculerDimensionsHex;
 procedure AppliquerEchelle(NouvelleEchelle: Single);
 procedure ModifierDecalage(DeltaX, DeltaY: Single);
@@ -243,9 +267,32 @@ procedure GenererNouvelleGrille;
 function AppliquerParametresGrille: boolean;
 procedure SaveHexGridToCSV();
 procedure InitialiserHauteurs;
+function ValeurVoiesCochees: Integer;
 
 implementation
 uses HexagonLogic;
+
+// =============================================================================
+// FONCTION: ValeurVoiesCochees
+// Calcule la valeur décimale positionnelle selon les checkboxes cochées
+// Système positionnel : voie1=unités(1), voie2=dizaines(10),
+//                       voie3=centaines(100), voie4=milliers(1000)
+// Exemples :
+//   voie1 seule         → 1
+//   voie2 seule         → 10
+//   voie1 + voie2       → 11
+//   voie1 + voie3       → 101
+//   voie1 + voie2 + voie4 → 1011
+//   toutes les voies    → 1111
+// =============================================================================
+function ValeurVoiesCochees: Integer;
+begin
+  Result := 0;
+  if CheckVoie1 then Result := Result + 1;     // position unités
+  if CheckVoie2 then Result := Result + 10;    // position dizaines
+  if CheckVoie3 then Result := Result + 100;   // position centaines
+  if CheckVoie4 then Result := Result + 1000;  // position milliers
+end;
 
 // =============================================================================
 // FONCTION COMPLÈTE : InitialiserHauteurs
@@ -272,7 +319,7 @@ procedure SaveHexGridToCSV();
 var
   F: TextFile;
   i, k, j: Integer;
-  NeighborStr, VerticesStr, ObjetsStr, EdgesStr: string;
+  NeighborStr, VerticesStr, ObjetsStr, EdgesStr, InfRStr, VoiesStr: string;
   fichierCSV: string;
 begin
   if (TypeCarteActive <> tcAucune) and (NomCarteCourante <> '') then
@@ -284,25 +331,39 @@ begin
   AssignFile(F, fichierCSV);
   Rewrite(F);
   try
-    // MODIFIÉ: Ajout de la colonne Hauteur après edge6
-    Writeln(F, 'Number,CenterX,CenterY,ColorR,ColorG,ColorB,ColorPtR,ColorPtG,ColorPtB,BSelected,Colonne,Ligne,Emplacement,PairImpairLigne,' +
-               'Vertex1X,Vertex1Y,Vertex2X,Vertex2Y,Vertex3X,Vertex3Y,Vertex4X,Vertex4Y,Vertex5X,Vertex5Y,Vertex6X,Vertex6Y,' +
-               'Neighbor1,Neighbor2,Neighbor3,Neighbor4,Neighbor5,Neighbor6,TypeTerrain,IsReference,Supprime,Exempt,' +
-               'objet1,objet2,objet3,objet4,objet5,objet6,objet7,objet8,objet9,objet10,' +
-               'edge1,edge2,edge3,edge4,edge5,edge6,Hauteur');  // <--- AJOUT Hauteur
+    // EN-TÊTE : 65 colonnes
+    // 53 base + 6 infr1..infr6 + 6 voies1..voies6
+    Writeln(F,
+      'Number,CenterX,CenterY,ColorR,ColorG,ColorB,ColorPtR,ColorPtG,ColorPtB,' +
+      'BSelected,Colonne,Ligne,Emplacement,PairImpairLigne,' +
+      'Vertex1X,Vertex1Y,Vertex2X,Vertex2Y,Vertex3X,Vertex3Y,' +
+      'Vertex4X,Vertex4Y,Vertex5X,Vertex5Y,Vertex6X,Vertex6Y,' +
+      'Neighbor1,Neighbor2,Neighbor3,Neighbor4,Neighbor5,Neighbor6,' +
+      'TypeTerrain,IsReference,Supprime,Exempt,' +
+      'objet1,objet2,objet3,objet4,objet5,objet6,objet7,objet8,objet9,objet10,' +
+      'edge1,edge2,edge3,edge4,edge5,edge6,' +
+      'Hauteur,' +
+      'infr1,infr2,infr3,infr4,infr5,infr6,' +    // index 53-58
+      'voies1,voies2,voies3,voies4,voies5,voies6'); // index 59-64
 
     for i := 1 to TotalNbreHex do
     begin
-      NeighborStr := Format('%d,%d,%d,%d,%d,%d', [HexGrid[i].Neighbors[1], HexGrid[i].Neighbors[2], HexGrid[i].Neighbors[3], HexGrid[i].Neighbors[4], HexGrid[i].Neighbors[5], HexGrid[i].Neighbors[6]]);
+      // Chaîne des 6 voisins
+      NeighborStr := Format('%d,%d,%d,%d,%d,%d',
+        [HexGrid[i].Neighbors[1], HexGrid[i].Neighbors[2],
+         HexGrid[i].Neighbors[3], HexGrid[i].Neighbors[4],
+         HexGrid[i].Neighbors[5], HexGrid[i].Neighbors[6]]);
 
+      // Chaîne des 12 coordonnées de sommets
       VerticesStr := '';
       for k := 0 to 5 do
       begin
         if k > 0 then VerticesStr := VerticesStr + ',';
-        VerticesStr := VerticesStr + Format('%d,%d', [HexGrid[i].Vertices[k].x, HexGrid[i].Vertices[k].y]);
+        VerticesStr := VerticesStr + Format('%d,%d',
+          [HexGrid[i].Vertices[k].x, HexGrid[i].Vertices[k].y]);
       end;
 
-      // Construction objets
+      // Chaîne des 10 objets
       ObjetsStr := '';
       for j := 1 to 10 do
       begin
@@ -310,7 +371,7 @@ begin
         ObjetsStr := ObjetsStr + BoolToStr(HexGrid[i].Objets[j], True);
       end;
 
-      // Construction edges
+      // Chaîne des 6 edges (rivières)
       EdgesStr := '';
       for j := 1 to 6 do
       begin
@@ -318,8 +379,25 @@ begin
         EdgesStr := EdgesStr + IntToStr(HexGrid[i].Edges[j]);
       end;
 
-      // MODIFIÉ: Ajout de la hauteur à la fin
-      Writeln(F, Format('%d,%d,%d,%d,%d,%d,%d,%d,%d,%s,%d,%d,%s,%s,%s,%s,%d,%d,%s,%s,%s,%s,%d',
+      // Chaîne des 6 InfR (0=libre, 5=infranchissable)
+      InfRStr := '';
+      for j := 1 to 6 do
+      begin
+        if j > 1 then InfRStr := InfRStr + ',';
+        InfRStr := InfRStr + IntToStr(HexGrid[i].InfR[j]);
+      end;
+
+      // Chaîne des 6 Voies (valeur décimale positionnelle 0..1111)
+      // Chaque côté stocke la combinaison de voies présentes sur ce lien
+      VoiesStr := '';
+      for j := 1 to 6 do
+      begin
+        if j > 1 then VoiesStr := VoiesStr + ',';
+        VoiesStr := VoiesStr + IntToStr(HexGrid[i].Voies[j]);
+      end;
+
+      // Ligne complète : 65 colonnes
+      Writeln(F, Format('%d,%d,%d,%d,%d,%d,%d,%d,%d,%s,%d,%d,%s,%s,%s,%s,%d,%d,%s,%s,%s,%s,%d,%s,%s',
         [HexGrid[i].Number,
          Round(HexGrid[i].Center.x), Round(HexGrid[i].Center.y),
          HexGrid[i].Color.r, HexGrid[i].Color.g, HexGrid[i].Color.b,
@@ -331,10 +409,13 @@ begin
          VerticesStr,
          NeighborStr,
          HexGrid[i].TypeTerrain, HexGrid[i].IsReference,
-         BoolToStr(HexGrid[i].Supprime, True), BoolToStr(HexGrid[i].Exempt, True),
+         BoolToStr(HexGrid[i].Supprime, True),
+         BoolToStr(HexGrid[i].Exempt, True),
          ObjetsStr,
          EdgesStr,
-         HexGrid[i].Hauteur]));  // <--- AJOUT Hauteur
+         HexGrid[i].Hauteur,
+         InfRStr,
+         VoiesStr]));  // NOUVEAU : VoiesStr en dernière position
     end;
 
     CloseFile(F);
@@ -378,6 +459,7 @@ begin
   AssignFile(F, PChar(csvFilePath));
   Reset(F);
   try
+    // Sauter la ligne d'en-tête
     if not Eof(F) then
       Readln(F, ligne);
 
@@ -388,6 +470,7 @@ begin
       Readln(F, ligne);
       if Trim(ligne) = '' then Continue;
 
+      // Découpage CSV → tableau elements[]
       SetLength(elements, 0);
       elementCount := 0;
       startPos := 1;
@@ -402,38 +485,54 @@ begin
           startPos := pos + 1;
         end;
       end;
-
       SetLength(elements, elementCount + 1);
       elements[elementCount] := Copy(ligne, startPos, Length(ligne) - startPos + 1);
       Inc(elementCount);
 
-      // NOUVEAU: 53 colonnes (36 base + 10 objets + 6 edges + 1 hauteur)
-      if elementCount >= 53 then
+      // =================================================================
+      // NOUVEAU : 65 colonnes — avec Voies[1..6] aux index 59..64
+      // =================================================================
+      if elementCount >= 65 then
       begin
         try
-          hexNumber := StrToInt(Trim(elements[0]));
+          hexNumber   := StrToInt(Trim(elements[0]));
           typeTerrain := StrToInt(Trim(elements[32]));
           isReference := StrToInt(Trim(elements[33]));
-          supprime := (Trim(elements[34]) = 'True') or (Trim(elements[34]) = '-1');
-          exempt := (Trim(elements[35]) = 'True') or (Trim(elements[35]) = '-1');
+          supprime    := (Trim(elements[34]) = 'True') or (Trim(elements[34]) = '-1');
+          exempt      := (Trim(elements[35]) = 'True') or (Trim(elements[35]) = '-1');
 
           if (hexNumber >= 1) and (hexNumber <= TotalNbreHex) then
           begin
             HexGrid[hexNumber].TypeTerrain := typeTerrain;
             HexGrid[hexNumber].IsReference := isReference;
-            HexGrid[hexNumber].Supprime := supprime;
-            HexGrid[hexNumber].Exempt := exempt;
+            HexGrid[hexNumber].Supprime    := supprime;
+            HexGrid[hexNumber].Exempt      := exempt;
 
-            // Charger objets (36-45)
+            // Objets index 36..45
             for j := 1 to 10 do
-              HexGrid[hexNumber].Objets[j] := (Trim(elements[35 + j]) = 'True') or (Trim(elements[35 + j]) = '-1');
+              HexGrid[hexNumber].Objets[j] :=
+                (Trim(elements[35 + j]) = 'True') or (Trim(elements[35 + j]) = '-1');
 
-            // Charger edges (46-51)
+            // Edges/rivières index 46..51
             for j := 1 to 6 do
-              HexGrid[hexNumber].Edges[j] := StrToIntDef(Trim(elements[45 + j]), 0);
+              HexGrid[hexNumber].Edges[j] :=
+                StrToIntDef(Trim(elements[45 + j]), 0);
 
-            // NOUVEAU: Charger hauteur (52)
-            HexGrid[hexNumber].Hauteur := StrToIntDef(Trim(elements[52]), 0);
+            // Hauteur index 52
+            HexGrid[hexNumber].Hauteur :=
+              StrToIntDef(Trim(elements[52]), 0);
+
+            // InfR index 53..58
+            for j := 1 to 6 do
+              HexGrid[hexNumber].InfR[j] :=
+                StrToIntDef(Trim(elements[52 + j]), 0);
+
+            // Voies index 59..64
+            // Valeur décimale positionnelle : 0=aucune, 1=voie1, 10=voie2,
+            // 100=voie3, 1000=voie4, combinaisons possibles ex: 1011
+            for j := 1 to 6 do
+              HexGrid[hexNumber].Voies[j] :=
+                StrToIntDef(Trim(elements[58 + j]), 0);
 
             if isReference > 0 then
               Inc(loadedReferences);
@@ -442,38 +541,139 @@ begin
         except
           on E: Exception do
           begin
-            WriteLn('Erreur parsing ligne hex: ' + elements[0]);
+            WriteLn('Erreur parsing ligne hex (65 col): ' + elements[0]);
             Continue;
           end;
         end;
       end
-      // Fichiers avec objets et edges mais sans hauteur (52 colonnes)
+
+      // =================================================================
+      // 59 colonnes — avec InfR mais sans Voies → Voies initialisées à 0
+      // =================================================================
+      else if elementCount >= 59 then
+      begin
+        try
+          hexNumber   := StrToInt(Trim(elements[0]));
+          typeTerrain := StrToInt(Trim(elements[32]));
+          isReference := StrToInt(Trim(elements[33]));
+          supprime    := (Trim(elements[34]) = 'True') or (Trim(elements[34]) = '-1');
+          exempt      := (Trim(elements[35]) = 'True') or (Trim(elements[35]) = '-1');
+
+          if (hexNumber >= 1) and (hexNumber <= TotalNbreHex) then
+          begin
+            HexGrid[hexNumber].TypeTerrain := typeTerrain;
+            HexGrid[hexNumber].IsReference := isReference;
+            HexGrid[hexNumber].Supprime    := supprime;
+            HexGrid[hexNumber].Exempt      := exempt;
+
+            for j := 1 to 10 do
+              HexGrid[hexNumber].Objets[j] :=
+                (Trim(elements[35 + j]) = 'True') or (Trim(elements[35 + j]) = '-1');
+
+            for j := 1 to 6 do
+              HexGrid[hexNumber].Edges[j] :=
+                StrToIntDef(Trim(elements[45 + j]), 0);
+
+            HexGrid[hexNumber].Hauteur :=
+              StrToIntDef(Trim(elements[52]), 0);
+
+            for j := 1 to 6 do
+              HexGrid[hexNumber].InfR[j] :=
+                StrToIntDef(Trim(elements[52 + j]), 0);
+
+            // Pas de Voies dans ce format → tout à 0
+            for j := 1 to 6 do
+              HexGrid[hexNumber].Voies[j] := 0;
+
+            if isReference > 0 then
+              Inc(loadedReferences);
+          end;
+
+        except
+          on E: Exception do
+          begin
+            WriteLn('Erreur parsing ligne hex (59 col): ' + elements[0]);
+            Continue;
+          end;
+        end;
+      end
+
+      // =================================================================
+      // 53 colonnes — avec Hauteur mais sans InfR ni Voies
+      // =================================================================
+      else if elementCount >= 53 then
+      begin
+        try
+          hexNumber   := StrToInt(Trim(elements[0]));
+          typeTerrain := StrToInt(Trim(elements[32]));
+          isReference := StrToInt(Trim(elements[33]));
+          supprime    := (Trim(elements[34]) = 'True') or (Trim(elements[34]) = '-1');
+          exempt      := (Trim(elements[35]) = 'True') or (Trim(elements[35]) = '-1');
+
+          if (hexNumber >= 1) and (hexNumber <= TotalNbreHex) then
+          begin
+            HexGrid[hexNumber].TypeTerrain := typeTerrain;
+            HexGrid[hexNumber].IsReference := isReference;
+            HexGrid[hexNumber].Supprime    := supprime;
+            HexGrid[hexNumber].Exempt      := exempt;
+
+            for j := 1 to 10 do
+              HexGrid[hexNumber].Objets[j] :=
+                (Trim(elements[35 + j]) = 'True') or (Trim(elements[35 + j]) = '-1');
+
+            for j := 1 to 6 do
+              HexGrid[hexNumber].Edges[j] :=
+                StrToIntDef(Trim(elements[45 + j]), 0);
+
+            HexGrid[hexNumber].Hauteur :=
+              StrToIntDef(Trim(elements[52]), 0);
+
+            for j := 1 to 6 do HexGrid[hexNumber].InfR[j]  := 0;
+            for j := 1 to 6 do HexGrid[hexNumber].Voies[j] := 0;
+
+            if isReference > 0 then
+              Inc(loadedReferences);
+          end;
+
+        except
+          on E: Exception do
+          begin
+            WriteLn('Erreur parsing ligne hex (53 col): ' + elements[0]);
+            Continue;
+          end;
+        end;
+      end
+
+      // =================================================================
+      // 52 colonnes — avec edges mais sans Hauteur, InfR ni Voies
+      // =================================================================
       else if elementCount >= 52 then
       begin
         try
-          hexNumber := StrToInt(Trim(elements[0]));
+          hexNumber   := StrToInt(Trim(elements[0]));
           typeTerrain := StrToInt(Trim(elements[32]));
           isReference := StrToInt(Trim(elements[33]));
-          supprime := (Trim(elements[34]) = 'True') or (Trim(elements[34]) = '-1');
-          exempt := (Trim(elements[35]) = 'True') or (Trim(elements[35]) = '-1');
+          supprime    := (Trim(elements[34]) = 'True') or (Trim(elements[34]) = '-1');
+          exempt      := (Trim(elements[35]) = 'True') or (Trim(elements[35]) = '-1');
 
           if (hexNumber >= 1) and (hexNumber <= TotalNbreHex) then
           begin
             HexGrid[hexNumber].TypeTerrain := typeTerrain;
             HexGrid[hexNumber].IsReference := isReference;
-            HexGrid[hexNumber].Supprime := supprime;
-            HexGrid[hexNumber].Exempt := exempt;
+            HexGrid[hexNumber].Supprime    := supprime;
+            HexGrid[hexNumber].Exempt      := exempt;
 
-            // Charger objets (36-45)
             for j := 1 to 10 do
-              HexGrid[hexNumber].Objets[j] := (Trim(elements[35 + j]) = 'True') or (Trim(elements[35 + j]) = '-1');
+              HexGrid[hexNumber].Objets[j] :=
+                (Trim(elements[35 + j]) = 'True') or (Trim(elements[35 + j]) = '-1');
 
-            // Charger edges (46-51)
             for j := 1 to 6 do
-              HexGrid[hexNumber].Edges[j] := StrToIntDef(Trim(elements[45 + j]), 0);
+              HexGrid[hexNumber].Edges[j] :=
+                StrToIntDef(Trim(elements[45 + j]), 0);
 
-            // Initialiser hauteur à 0
             HexGrid[hexNumber].Hauteur := 0;
+            for j := 1 to 6 do HexGrid[hexNumber].InfR[j]  := 0;
+            for j := 1 to 6 do HexGrid[hexNumber].Voies[j] := 0;
 
             if isReference > 0 then
               Inc(loadedReferences);
@@ -482,37 +682,39 @@ begin
         except
           on E: Exception do
           begin
-            WriteLn('Erreur parsing ligne hex: ' + elements[0]);
+            WriteLn('Erreur parsing ligne hex (52 col): ' + elements[0]);
             Continue;
           end;
         end;
       end
-      // Anciens fichiers avec objets mais sans edges ni hauteur (46 colonnes)
+
+      // =================================================================
+      // 46 colonnes — avec objets mais sans edges, Hauteur, InfR ni Voies
+      // =================================================================
       else if elementCount >= 46 then
       begin
         try
-          hexNumber := StrToInt(Trim(elements[0]));
+          hexNumber   := StrToInt(Trim(elements[0]));
           typeTerrain := StrToInt(Trim(elements[32]));
           isReference := StrToInt(Trim(elements[33]));
-          supprime := (Trim(elements[34]) = 'True') or (Trim(elements[34]) = '-1');
-          exempt := (Trim(elements[35]) = 'True') or (Trim(elements[35]) = '-1');
+          supprime    := (Trim(elements[34]) = 'True') or (Trim(elements[34]) = '-1');
+          exempt      := (Trim(elements[35]) = 'True') or (Trim(elements[35]) = '-1');
 
           if (hexNumber >= 1) and (hexNumber <= TotalNbreHex) then
           begin
             HexGrid[hexNumber].TypeTerrain := typeTerrain;
             HexGrid[hexNumber].IsReference := isReference;
-            HexGrid[hexNumber].Supprime := supprime;
-            HexGrid[hexNumber].Exempt := exempt;
+            HexGrid[hexNumber].Supprime    := supprime;
+            HexGrid[hexNumber].Exempt      := exempt;
 
             for j := 1 to 10 do
-              HexGrid[hexNumber].Objets[j] := (Trim(elements[35 + j]) = 'True') or (Trim(elements[35 + j]) = '-1');
+              HexGrid[hexNumber].Objets[j] :=
+                (Trim(elements[35 + j]) = 'True') or (Trim(elements[35 + j]) = '-1');
 
-            // Initialiser edges à 0
-            for j := 1 to 6 do
-              HexGrid[hexNumber].Edges[j] := 0;
-
-            // Initialiser hauteur à 0
+            for j := 1 to 6 do HexGrid[hexNumber].Edges[j]  := 0;
             HexGrid[hexNumber].Hauteur := 0;
+            for j := 1 to 6 do HexGrid[hexNumber].InfR[j]   := 0;
+            for j := 1 to 6 do HexGrid[hexNumber].Voies[j]  := 0;
 
             if isReference > 0 then
               Inc(loadedReferences);
@@ -521,36 +723,36 @@ begin
         except
           on E: Exception do
           begin
-            WriteLn('Erreur parsing ligne hex: ' + elements[0]);
+            WriteLn('Erreur parsing ligne hex (46 col): ' + elements[0]);
             Continue;
           end;
         end;
       end
-      // Anciens fichiers sans objets ni edges ni hauteur (36 colonnes)
+
+      // =================================================================
+      // 36 colonnes — sans objets, edges, Hauteur, InfR ni Voies
+      // =================================================================
       else if elementCount >= 36 then
       begin
         try
-          hexNumber := StrToInt(Trim(elements[0]));
+          hexNumber   := StrToInt(Trim(elements[0]));
           typeTerrain := StrToInt(Trim(elements[32]));
           isReference := StrToInt(Trim(elements[33]));
-          supprime := (Trim(elements[34]) = 'True') or (Trim(elements[34]) = '-1');
-          exempt := (Trim(elements[35]) = 'True') or (Trim(elements[35]) = '-1');
+          supprime    := (Trim(elements[34]) = 'True') or (Trim(elements[34]) = '-1');
+          exempt      := (Trim(elements[35]) = 'True') or (Trim(elements[35]) = '-1');
 
           if (hexNumber >= 1) and (hexNumber <= TotalNbreHex) then
           begin
             HexGrid[hexNumber].TypeTerrain := typeTerrain;
             HexGrid[hexNumber].IsReference := isReference;
-            HexGrid[hexNumber].Supprime := supprime;
-            HexGrid[hexNumber].Exempt := exempt;
+            HexGrid[hexNumber].Supprime    := supprime;
+            HexGrid[hexNumber].Exempt      := exempt;
 
-            for j := 1 to 10 do
-              HexGrid[hexNumber].Objets[j] := False;
-
-            for j := 1 to 6 do
-              HexGrid[hexNumber].Edges[j] := 0;
-
-            // Initialiser hauteur à 0
+            for j := 1 to 10 do HexGrid[hexNumber].Objets[j]  := False;
+            for j := 1 to 6  do HexGrid[hexNumber].Edges[j]   := 0;
             HexGrid[hexNumber].Hauteur := 0;
+            for j := 1 to 6  do HexGrid[hexNumber].InfR[j]    := 0;
+            for j := 1 to 6  do HexGrid[hexNumber].Voies[j]   := 0;
 
             if isReference > 0 then
               Inc(loadedReferences);
@@ -559,35 +761,35 @@ begin
         except
           on E: Exception do
           begin
-            WriteLn('Erreur parsing ligne hex: ' + elements[0]);
+            WriteLn('Erreur parsing ligne hex (36 col): ' + elements[0]);
             Continue;
           end;
         end;
       end
-      // Très anciens fichiers (35 colonnes)
+
+      // =================================================================
+      // 35 colonnes — très anciens fichiers (sans Exempt)
+      // =================================================================
       else if elementCount >= 35 then
       begin
         try
-          hexNumber := StrToInt(Trim(elements[0]));
+          hexNumber   := StrToInt(Trim(elements[0]));
           typeTerrain := StrToInt(Trim(elements[32]));
           isReference := StrToInt(Trim(elements[33]));
-          supprime := (Trim(elements[34]) = 'True') or (Trim(elements[34]) = '-1');
+          supprime    := (Trim(elements[34]) = 'True') or (Trim(elements[34]) = '-1');
 
           if (hexNumber >= 1) and (hexNumber <= TotalNbreHex) then
           begin
             HexGrid[hexNumber].TypeTerrain := typeTerrain;
             HexGrid[hexNumber].IsReference := isReference;
-            HexGrid[hexNumber].Supprime := supprime;
-            HexGrid[hexNumber].Exempt := False;
+            HexGrid[hexNumber].Supprime    := supprime;
+            HexGrid[hexNumber].Exempt      := False;
 
-            for j := 1 to 10 do
-              HexGrid[hexNumber].Objets[j] := False;
-
-            for j := 1 to 6 do
-              HexGrid[hexNumber].Edges[j] := 0;
-
-            // Initialiser hauteur à 0
+            for j := 1 to 10 do HexGrid[hexNumber].Objets[j]  := False;
+            for j := 1 to 6  do HexGrid[hexNumber].Edges[j]   := 0;
             HexGrid[hexNumber].Hauteur := 0;
+            for j := 1 to 6  do HexGrid[hexNumber].InfR[j]    := 0;
+            for j := 1 to 6  do HexGrid[hexNumber].Voies[j]   := 0;
 
             if isReference > 0 then
               Inc(loadedReferences);
@@ -596,30 +798,34 @@ begin
         except
           on E: Exception do
           begin
-            WriteLn('Erreur parsing ligne hex: ' + elements[0]);
+            WriteLn('Erreur parsing ligne hex (35 col): ' + elements[0]);
             Continue;
           end;
         end;
       end;
-    end;
+
+    end; // fin while
+
+    CloseFile(F);
 
     NombreReferences := loadedReferences;
+    if loadedReferences > 0 then
+    begin
+      ClassificationTerminee := True;
+      WriteLn('Références chargées: ' + IntToStr(loadedReferences));
+    end;
 
-    WriteLn('Données chargées avec succès:');
-    WriteLn('- Références: ' + IntToStr(loadedReferences));
-    WriteLn('- TypeTerrain, Supprime, Exempt, Objets, Edges et Hauteurs restaurés');
-
+    WriteLn('Chargement CSV terminé: ' + IntToStr(loadedReferences) + ' références');
     Result := True;
 
   except
     on E: Exception do
     begin
-      WriteLn('ERREUR chargement CSV: ' + E.Message);
+      CloseFile(F);
+      WriteLn('Erreur chargement CSV: ' + E.Message);
       Result := False;
     end;
   end;
-
-  CloseFile(F);
 end;
 
 function CopierFichierAvecStream(const FichierSource, FichierDestination: string): Boolean;

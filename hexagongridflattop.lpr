@@ -65,7 +65,7 @@ begin
   ButtonSauverCarte := CreateButton(windowWidth - PanelWidth + 50, 210, 200, 40, BROWN, ORANGE, RED);
   ButtonGenererGrille := CreateButton(windowWidth - PanelWidth + 50, 260, 200, 40, ORANGE, YELLOW, RED);
 
-  // =================== CHECKBOXES ===================
+  // =================== CHECKBOXES ORIENTATION / AFFICHAGE ===================
   CheckboxOrientation.x := windowWidth - PanelWidth + 50;
   CheckboxOrientation.y := 320;
   CheckboxOrientation.width := 20;
@@ -97,45 +97,86 @@ begin
   TextBoxLignes.width := 80;
   TextBoxLignes.height := 25;
 
-  // =================== TOGGLE GROUP PRINCIPAL ===================
-  // ⭐ MODIFIÉ: Largeur réduite de 80 → 40 pour accueillir 6 modes
+  // =================== TOGGLE GROUP PRINCIPAL (6 modes de base) ===================
   ToggleGroupAppMode.x := windowWidth - PanelWidth + 50;
   ToggleGroupAppMode.y := 465;
-  ToggleGroupAppMode.width := 40;  // ⭐ Largeur réduite pour 6 boutons
+  ToggleGroupAppMode.width := 40;   // Largeur réduite pour 6 boutons côte à côte
   ToggleGroupAppMode.height := 25;
 
-  // =================== BOUTON DÉTECTION ===================
-  ButtonDetection := CreateButton(windowWidth - PanelWidth + 50, 510, 200, 30, MAGENTA, RED, MAROON);
+  // =================== TOGGLE GROUP MODE AVANCÉ (InfR + Voies) ===================
+  // Positionné juste en dessous du toggle principal (465 + 25 + 5 = 495)
+  ToggleGroupModeAvance.x := windowWidth - PanelWidth + 50;
+  ToggleGroupModeAvance.y := 495;
+  ToggleGroupModeAvance.width := 100;  // 2 boutons : InfR + Voies
+  ToggleGroupModeAvance.height := 25;
+
+  // =================== BOUTON DÉTECTION (MODE DÉTECTION) ===================
+  // Y=545 (décalé +35 par rapport à l'ancienne position 510)
+  ButtonDetection := CreateButton(windowWidth - PanelWidth + 50, 545, 200, 30, MAGENTA, RED, MAROON);
 
   // =================== SPINNER CORRECTION (MODE DÉTECTION) ===================
+  // Y=600 (décalé +35 par rapport à l'ancienne position 565)
   SpinnerCorrection.x := windowWidth - PanelWidth + 50;
-  SpinnerCorrection.y := 565;
+  SpinnerCorrection.y := 600;
   SpinnerCorrection.width := 100;
   SpinnerCorrection.height := 25;
 
-  // =================== TOGGLE GROUP SUPPRESSION ===================
+  // =================== TOGGLE GROUP SUPPRESSION (MODE SUPPRESSION) ===================
+  // Y=650 (décalé +35 par rapport à l'ancienne position 615)
   ToggleGroupSuppression.x := windowWidth - PanelWidth + 50;
-  ToggleGroupSuppression.y := 615;
+  ToggleGroupSuppression.y := 650;
   ToggleGroupSuppression.width := 100;
   ToggleGroupSuppression.height := 25;
 
   // =================== SPINNER OBJET (MODE ITEM) ===================
+  // Y=560 (décalé +35 par rapport à l'ancienne position 525)
   SpinnerObjet.x := windowWidth - PanelWidth + 50;
-  SpinnerObjet.y := 525;
+  SpinnerObjet.y := 560;
   SpinnerObjet.width := 100;
   SpinnerObjet.height := 25;
 
   // =================== SPINNER RIVIÈRE (MODE RIVIÈRE) ===================
+  // Y=555 (décalé +35 par rapport à l'ancienne position 520)
   SpinnerRiviere.x := windowWidth - PanelWidth + 50;
-  SpinnerRiviere.y := 520;
+  SpinnerRiviere.y := 555;
   SpinnerRiviere.width := 100;
   SpinnerRiviere.height := 25;
 
-  // =================== ⭐ NOUVEAU: SPINNER HAUTEUR (MODE HAUTEUR) ===================
+  // =================== SPINNER HAUTEUR (MODE HAUTEUR) ===================
+  // Y=555 (décalé +35 par rapport à l'ancienne position 520)
   SpinnerHauteur.x := windowWidth - PanelWidth + 50;
-  SpinnerHauteur.y := 520;
+  SpinnerHauteur.y := 555;
   SpinnerHauteur.width := 100;
   SpinnerHauteur.height := 25;
+
+  // =================== CHECKBOXES VOIES (MODE VOIES) ===================
+  // 4 checkboxes conditionnelles, affichées uniquement en mode amVoies
+  // Espacées de 23px verticalement pour être lisibles dans le panneau
+
+  // Voie1 : sentier, 2px, DARKGRAY
+  CheckboxVoie1.x := windowWidth - PanelWidth + 50;
+  CheckboxVoie1.y := 545;
+  CheckboxVoie1.width := 20;
+  CheckboxVoie1.height := 20;
+
+  // Voie2 : route, 4px, BLUE
+  CheckboxVoie2.x := windowWidth - PanelWidth + 50;
+  CheckboxVoie2.y := 568;
+  CheckboxVoie2.width := 20;
+  CheckboxVoie2.height := 20;
+
+  // Voie3 : nationale, 6px, YELLOW
+  CheckboxVoie3.x := windowWidth - PanelWidth + 50;
+  CheckboxVoie3.y := 591;
+  CheckboxVoie3.width := 20;
+  CheckboxVoie3.height := 20;
+
+  // Voie4 : chemin de fer, 8px, RED
+  CheckboxVoie4.x := windowWidth - PanelWidth + 50;
+  CheckboxVoie4.y := 614;
+  CheckboxVoie4.width := 20;
+  CheckboxVoie4.height := 20;
+
 end;
 
 // =============================================================================
@@ -310,9 +351,11 @@ var
   orientationText: string;
   wasChecked: Boolean;
   oldAppModeIndex: Integer;
+  oldAppModeAvanceIndex: Integer;
   dialogRect: TRectangle;
   dialogResult: Integer;
   oldSuppressionModeIndex: Integer;
+  valeurCourante: Integer;        // Pour afficher la valeur décimale Voies courante
 begin
   panelRect.x := windowWidth - PanelWidth;
   panelRect.y := 0;
@@ -348,12 +391,10 @@ begin
   if GuiButton(ButtonGenererGrille.Rect, 'Générer grille') = 1 then
   begin
     if AppliquerParametresGrille then
-    begin
       GenererNouvelleGrille;
-    end;
   end;
 
-  // =================== CHECKBOXES ===================
+  // =================== CHECKBOXES ORIENTATION / AFFICHAGE ===================
   wasChecked := OrientationChecked;
   GuiCheckBox(CheckboxOrientation, 'Pointy Top', @OrientationChecked);
 
@@ -370,166 +411,261 @@ begin
   GuiCheckBox(CheckboxAfficherGrille, 'Afficher grille', @AfficherGrille);
   GuiCheckBox(CheckboxCoinIn, 'CoinIn', @CoinInChecked);
 
-  // =================== TEXTBOXES ===================
-  if GuivalueBox(TextBoxColonnes, '',@columns ,2,100, editingColonnes)<>0 then editingColonnes:=NOT editingColonnes;
-  if GuivalueBox(TextBoxLignes, '', @rows, 2,100,editingLignes)<>0 then editingLignes:=NOT editingLignes;
+  // =================== TEXTBOXES COLONNES / LIGNES ===================
+  if GuivalueBox(TextBoxColonnes, '', @columns, 2, 100, editingColonnes) <> 0 then
+    editingColonnes := not editingColonnes;
+  if GuivalueBox(TextBoxLignes, '', @rows, 2, 100, editingLignes) <> 0 then
+    editingLignes := not editingLignes;
 
-  // =================== TOGGLE GROUP PRINCIPAL ===================
-  // ⭐ MODIFIÉ: 6 modes (ajout de Hauteur)
+  // =================== LABELS FIXES ===================
+  DrawText('Colonnes:', windowWidth - PanelWidth + 50, 410, 12, DARKGRAY);
+  DrawText('Lignes:',   windowWidth - PanelWidth + 140, 410, 12, DARKGRAY);
+  DrawText('Mode:',     windowWidth - PanelWidth + 50, 450, 12, DARKGRAY);
+  DrawText('Avancé:',   windowWidth - PanelWidth + 50, 483, 10, DARKGRAY);
+
+  // =================== TOGGLE GROUP PRINCIPAL (6 modes de base) ===================
   oldAppModeIndex := AppModeIndex;
-  GuiToggleGroup(ToggleGroupAppMode, 'Normal;Détection;Suppression;Item;Riviere;Hauteur', @AppModeIndex);
+  GuiToggleGroup(ToggleGroupAppMode,
+    'Normal;Détection;Suppression;Item;Riviere;Hauteur', @AppModeIndex);
 
   if AppModeIndex <> oldAppModeIndex then
   begin
+    // Désélectionner le 2ème toggle (exclusion mutuelle)
+    AppModeAvanceIndex := -1;
+    // Réinitialiser les sources en attente
+    HexInfRSource := 0;
+    HexVoiesSource := 0;
     case AppModeIndex of
       0: AppMode := amNormal;
       1: AppMode := amDetection;
       2: AppMode := amSuppression;
       3: AppMode := amObjet;
       4: AppMode := amRiviere;
-      5: AppMode := amHauteur;  // ⭐ NOUVEAU: case 5 = mode Hauteur
+      5: AppMode := amHauteur;
     end;
   end;
 
-  // =================== LABELS ===================
-  DrawText('Colonnes:', windowWidth - PanelWidth + 50, 410, 12, DARKGRAY);
-  DrawText('Lignes:', windowWidth - PanelWidth + 140, 410, 12, DARKGRAY);
-  DrawText('Mode:', windowWidth - PanelWidth + 50, 450, 12, DARKGRAY);
+  // =================== TOGGLE GROUP MODE AVANCÉ (InfR + Voies) ===================
+  oldAppModeAvanceIndex := AppModeAvanceIndex;
+  GuiToggleGroup(ToggleGroupModeAvance, 'InfR;Voies', @AppModeAvanceIndex);
 
-  // =================== INTERFACE DE DÉTECTION ===================
+  if AppModeAvanceIndex <> oldAppModeAvanceIndex then
+  begin
+    // Désélectionner le 1er toggle (exclusion mutuelle)
+    AppModeIndex := -1;
+    // Réinitialiser les sources en attente
+    HexInfRSource := 0;
+    HexVoiesSource := 0;
+    case AppModeAvanceIndex of
+      0: AppMode := amInfR;
+      1: AppMode := amVoies;
+    end;
+  end;
+
+  // =================== INTERFACE DÉTECTION ===================
   if AppMode = amDetection then
   begin
-    DrawText('Status:', windowWidth - PanelWidth + 50, 495, 12, DARKGRAY);
-    DrawText(PChar(GetDetectionStatus()), windowWidth - PanelWidth + 95, 495, 14, DARKBLUE);
+    DrawText('Status:', windowWidth - PanelWidth + 50, 530, 12, DARKGRAY);
+    DrawText(PChar(GetDetectionStatus()),
+             windowWidth - PanelWidth + 95, 530, 14, DARKBLUE);
 
     if DetectionActive then
     begin
       if GuiButton(ButtonDetection.Rect, 'Terminer sélection') = 1 then
-      begin
         StopReferenceSelection;
-      end;
     end
     else
     begin
       if GuiButton(ButtonDetection.Rect, 'Commencer sélection') = 1 then
       begin
         if NombreReferences > 0 then
-        begin
-          ShowResetDialog := True;
-        end
+          ShowResetDialog := True
         else
-        begin
           StartReferenceSelection;
-        end;
       end;
     end;
 
     if NombreReferences > 0 then
     begin
-      DrawText('Modification du terrain:', windowWidth - PanelWidth + 50, 545, 12, DARKGRAY);
+      DrawText('Modification du terrain:',
+               windowWidth - PanelWidth + 50, 580, 12, DARKGRAY);
 
       if ValeurSpinnerCorrection > NombreReferences then
         ValeurSpinnerCorrection := NombreReferences;
       if ValeurSpinnerCorrection < 1 then
         ValeurSpinnerCorrection := 1;
 
-      GuiSpinner(SpinnerCorrection, '', @ValeurSpinnerCorrection, 1, NombreReferences, False);
+      GuiSpinner(SpinnerCorrection, '', @ValeurSpinnerCorrection,
+                 1, NombreReferences, False);
 
       DrawText(PChar('Type: ' + IntToStr(ValeurSpinnerCorrection)),
-               windowWidth - PanelWidth + 160, 560, 12, DARKGREEN);
+               windowWidth - PanelWidth + 160, 595, 12, DARKGREEN);
     end;
   end;
 
-  // =================== INTERFACE DE SUPPRESSION ===================
+  // =================== INTERFACE SUPPRESSION ===================
   if AppMode = amSuppression then
   begin
-    DrawText('Mode suppression actif:', windowWidth - PanelWidth + 50, 595, 14, RED);
+    DrawText('Mode suppression actif:',
+             windowWidth - PanelWidth + 50, 530, 14, RED);
 
     oldSuppressionModeIndex := AppModeSuppressionIndex;
-    GuiToggleGroup(ToggleGroupSuppression, 'Suppression;Exemption', @AppModeSuppressionIndex);
+    GuiToggleGroup(ToggleGroupSuppression,
+                   'Suppression;Exemption', @AppModeSuppressionIndex);
 
     case AppModeSuppressionIndex of
       0:
       begin
-        DrawText('Action: Supprimer/Restaurer', windowWidth - PanelWidth + 50, 650, 14, RED);
-        DrawText('1er clic: Supprime + croix rouge', windowWidth - PanelWidth + 50, 670, 12, DARKGRAY);
-        DrawText('2ème clic: Restaure hexagone', windowWidth - PanelWidth + 50, 685, 12, DARKGRAY);
+        DrawText('Action: Supprimer/Restaurer',
+                 windowWidth - PanelWidth + 50, 685, 14, RED);
+        DrawText('1er clic: Supprime + croix rouge',
+                 windowWidth - PanelWidth + 50, 705, 12, DARKGRAY);
+        DrawText('2ème clic: Restaure hexagone',
+                 windowWidth - PanelWidth + 50, 720, 12, DARKGRAY);
       end;
-
       1:
       begin
-        DrawText('Action: Exemption', windowWidth - PanelWidth + 50, 650, 14, ORANGE);
-        DrawText('1er clic: Exempte + O rouge', windowWidth - PanelWidth + 50, 670, 12, DARKGRAY);
-        DrawText('2ème clic: Restaure (DUMMY)', windowWidth - PanelWidth + 50, 685, 12, DARKGRAY);
+        DrawText('Action: Exemption',
+                 windowWidth - PanelWidth + 50, 685, 14, ORANGE);
+        DrawText('1er clic: Exempte + O rouge',
+                 windowWidth - PanelWidth + 50, 705, 12, DARKGRAY);
+        DrawText('2ème clic: Restaure',
+                 windowWidth - PanelWidth + 50, 720, 12, DARKGRAY);
       end;
     end;
 
-    DrawText('Cliquez sur un hexagone', windowWidth - PanelWidth + 50, 705, 12, DARKBLUE);
+    DrawText('Cliquez sur un hexagone',
+             windowWidth - PanelWidth + 50, 740, 12, DARKBLUE);
   end;
 
   // =================== INTERFACE ITEM ===================
   if AppMode = amObjet then
   begin
-    DrawText('Mode Item actif:', windowWidth - PanelWidth + 50, 495, 14, BLUE);
+    DrawText('Mode Item actif:', windowWidth - PanelWidth + 50, 530, 14, BLUE);
 
     GuiSpinner(SpinnerObjet, '', @ValeurSpinnerObjet, 1, 10, False);
 
-    DrawText(PChar('Item sélectionné: ' + IntToStr(ValeurSpinnerObjet)),
-             windowWidth - PanelWidth + 160, 515, 12, DARKBLUE);
+    DrawText(PChar('Item: ' + IntToStr(ValeurSpinnerObjet)),
+             windowWidth - PanelWidth + 160, 550, 12, DARKBLUE);
 
-    DrawText('Actions:', windowWidth - PanelWidth + 50, 545, 12, DARKGRAY);
-    DrawText('1er clic: Place rond rouge', windowWidth - PanelWidth + 50, 565, 12, DARKGRAY);
-    DrawText('2ème clic: Supprime le rond', windowWidth - PanelWidth + 50, 580, 12, DARKGRAY);
-    DrawText('', windowWidth - PanelWidth + 50, 595, 12, DARKGRAY);
-    DrawText('Affichage:', windowWidth - PanelWidth + 50, 615, 12, DARKGRAY);
-    DrawText('Uniquement items du slider actuel', windowWidth - PanelWidth + 50, 635, 12, DARKGRAY);
-    DrawText('', windowWidth - PanelWidth + 50, 650, 12, DARKGRAY);
-    DrawText('Note: Un hexagone peut avoir', windowWidth - PanelWidth + 50, 670, 11, DARKGRAY);
-    DrawText('plusieurs items simultanément', windowWidth - PanelWidth + 50, 685, 11, DARKGRAY);
+    DrawText('1er clic: Place rond rouge',
+             windowWidth - PanelWidth + 50, 585, 12, DARKGRAY);
+    DrawText('2ème clic: Supprime le rond',
+             windowWidth - PanelWidth + 50, 600, 12, DARKGRAY);
+    DrawText('Note: cumul possible sur un hex',
+             windowWidth - PanelWidth + 50, 625, 11, DARKGRAY);
   end;
 
   // =================== INTERFACE RIVIÈRE ===================
   if AppMode = amRiviere then
   begin
-    DrawText('Mode Rivière actif:', windowWidth - PanelWidth + 50, 495, 14, RED);
+    DrawText('Mode Rivière actif:',
+             windowWidth - PanelWidth + 50, 530, 14, RED);
 
-    GuiSpinner(SpinnerRiviere, '', @ValeurSpinnerRiviere, 0, 10, False); // 10 falaise, 1à 5 largeur riviere
+    GuiSpinner(SpinnerRiviere, '', @ValeurSpinnerRiviere, 0, 10, False);
 
-    DrawText(PChar('Type: riv' + IntToStr(ValeurSpinnerRiviere)),windowWidth - PanelWidth + 160, 515, 12, DARKGRAY);
+    DrawText(PChar('Type: riv' + IntToStr(ValeurSpinnerRiviere)),
+             windowWidth - PanelWidth + 160, 550, 12, DARKGRAY);
 
-    DrawText('Instructions:', windowWidth - PanelWidth + 50, 545, 12, DARKGRAY);
-    DrawText('1er clic: Sélectionne hex source', windowWidth - PanelWidth + 50, 565, 12, DARKGRAY);
-    DrawText('2ème clic: Hex adjacent', windowWidth - PanelWidth + 50, 580, 12, DARKGRAY);
-    DrawText('  → Trace trait rouge', windowWidth - PanelWidth + 50, 595, 12, DARKGRAY);
-    DrawText('', windowWidth - PanelWidth + 50, 610, 12, DARKGRAY);
-    DrawText('Re-clic sur paire:', windowWidth - PanelWidth + 50, 625, 12, DARKGRAY);
-    DrawText('  → Supprime le trait', windowWidth - PanelWidth + 50, 640, 12, DARKGRAY);
-    DrawText('', windowWidth - PanelWidth + 50, 655, 12, DARKGRAY);
-    DrawText('Épaisseur = valeur spinner', windowWidth - PanelWidth + 50, 670, 11, DARKGRAY);
-    DrawText('(1-5 pixels)', windowWidth - PanelWidth + 50, 685, 11, DARKGRAY);
+    DrawText('1er clic: Sélectionne hex source',
+             windowWidth - PanelWidth + 50, 585, 12, DARKGRAY);
+    DrawText('2ème clic: Hex adjacent',
+             windowWidth - PanelWidth + 50, 600, 12, DARKGRAY);
+    DrawText('  → Trace trait rouge',
+             windowWidth - PanelWidth + 50, 615, 12, DARKGRAY);
+    DrawText('Re-clic: Supprime le trait',
+             windowWidth - PanelWidth + 50, 635, 12, DARKGRAY);
   end;
 
-  // =================== ⭐ NOUVEAU: INTERFACE HAUTEUR ===================
+  // =================== INTERFACE HAUTEUR ===================
   if AppMode = amHauteur then
   begin
-    DrawText('Mode Hauteur actif:', windowWidth - PanelWidth + 50, 495, 14, DARKGREEN);
+    DrawText('Mode Hauteur actif:',
+             windowWidth - PanelWidth + 50, 530, 14, DARKGREEN);
 
-    // Spinner pour sélectionner la hauteur (0-99)
     GuiSpinner(SpinnerHauteur, '', @ValeurSpinnerHauteur, -2, 10, False);
 
     DrawText(PChar('Hauteur: ' + IntToStr(ValeurSpinnerHauteur)),
-             windowWidth - PanelWidth + 160, 515, 12, DARKBLUE);
+             windowWidth - PanelWidth + 160, 550, 12, DARKBLUE);
 
-    DrawText('Instructions:', windowWidth - PanelWidth + 50, 545, 12, DARKGRAY);
-    DrawText('1. Sélectionnez la hauteur (0-99)', windowWidth - PanelWidth + 50, 565, 12, DARKGRAY);
-    DrawText('2. Cliquez sur un hexagone', windowWidth - PanelWidth + 50, 580, 12, DARKGRAY);
-    DrawText('   → Applique la hauteur', windowWidth - PanelWidth + 50, 595, 12, DARKGRAY);
-    DrawText('', windowWidth - PanelWidth + 50, 610, 12, DARKGRAY);
-    DrawText('Affichage:', windowWidth - PanelWidth + 50, 625, 12, DARKGRAY);
-    DrawText('Le chiffre affiché = hauteur', windowWidth - PanelWidth + 50, 640, 12, DARKGRAY);
-    DrawText('', windowWidth - PanelWidth + 50, 655, 12, DARKGRAY);
-    DrawText('Hauteur 0 = terrain plat', windowWidth - PanelWidth + 50, 670, 11, DARKGRAY);
-    DrawText('Hauteur 99 = montagne haute', windowWidth - PanelWidth + 50, 685, 11, DARKGRAY);
+    DrawText('Cliquez sur un hexagone',
+             windowWidth - PanelWidth + 50, 585, 12, DARKGRAY);
+    DrawText('  → Applique la hauteur',
+             windowWidth - PanelWidth + 50, 600, 12, DARKGRAY);
+    DrawText('Hauteur 0 = terrain plat',
+             windowWidth - PanelWidth + 50, 625, 11, DARKGRAY);
+  end;
+
+  // =================== INTERFACE InfR ===================
+  if AppMode = amInfR then
+  begin
+    DrawText('Mode InfR actif:',
+             windowWidth - PanelWidth + 50, 530, 14, MAROON);
+
+    DrawText('1er clic: Sélectionne hex source',
+             windowWidth - PanelWidth + 50, 558, 12, DARKGRAY);
+    DrawText('2ème clic: Hex adjacent',
+             windowWidth - PanelWidth + 50, 573, 12, DARKGRAY);
+    DrawText('  → Trait marron (ep.5)',
+             windowWidth - PanelWidth + 50, 588, 12, DARKGRAY);
+    DrawText('Re-clic même paire: Supprime',
+             windowWidth - PanelWidth + 50, 608, 12, DARKGRAY);
+
+    // Affichage dynamique de la source en attente
+    if HexInfRSource > 0 then
+      DrawText(PChar('Source: hex #' + IntToStr(HexInfRSource)),
+               windowWidth - PanelWidth + 50, 633, 13, MAROON)
+    else
+      DrawText('Source: aucune',
+               windowWidth - PanelWidth + 50, 633, 13, DARKGRAY);
+  end;
+
+  // =================== INTERFACE VOIES ===================
+  if AppMode = amVoies then
+  begin
+    DrawText('Mode Voies actif:',
+             windowWidth - PanelWidth + 50, 530, 14, DARKBLUE);
+
+    DrawText('Voies à appliquer:',
+             windowWidth - PanelWidth + 50, 553, 12, DARKGRAY);
+
+    // --- Checkbox Voie1 : sentier, 2px, DARKGRAY ---
+    GuiCheckBox(CheckboxVoie1, 'Voie1-sentier  2px', @CheckVoie1);
+
+    // --- Checkbox Voie2 : route, 4px, BLUE ---
+    GuiCheckBox(CheckboxVoie2, 'Voie2-route    4px', @CheckVoie2);
+
+    // --- Checkbox Voie3 : nationale, 6px, YELLOW ---
+    GuiCheckBox(CheckboxVoie3, 'Voie3-nationale 6px', @CheckVoie3);
+
+    // --- Checkbox Voie4 : chemin de fer, 8px, RED ---
+    GuiCheckBox(CheckboxVoie4, 'Voie4-fer      8px', @CheckVoie4);
+
+    // --- Affichage de la valeur décimale courante ---
+    valeurCourante := ValeurVoiesCochees;
+    if valeurCourante > 0 then
+      DrawText(PChar('Valeur: ' + IntToStr(valeurCourante)),
+               windowWidth - PanelWidth + 50, 638, 13, DARKBLUE)
+    else
+      DrawText('Valeur: 0 (aucune voie)',
+               windowWidth - PanelWidth + 50, 638, 13, DARKGRAY);
+
+    DrawText('1er clic: Sélectionne hex source',
+             windowWidth - PanelWidth + 50, 658, 12, DARKGRAY);
+    DrawText('2ème clic: Hex adjacent',
+             windowWidth - PanelWidth + 50, 673, 12, DARKGRAY);
+    DrawText('  → Pose les voies cochées',
+             windowWidth - PanelWidth + 50, 688, 12, DARKGRAY);
+    DrawText('Re-clic même paire: Remet à 0',
+             windowWidth - PanelWidth + 50, 708, 12, DARKGRAY);
+
+    // Affichage dynamique de la source en attente
+    if HexVoiesSource > 0 then
+      DrawText(PChar('Source: hex #' + IntToStr(HexVoiesSource)),
+               windowWidth - PanelWidth + 50, 728, 13, DARKBLUE)
+    else
+      DrawText('Source: aucune',
+               windowWidth - PanelWidth + 50, 728, 13, DARKGRAY);
   end;
 
   // =================== INFORMATIONS GÉNÉRALES ===================
@@ -537,35 +673,55 @@ begin
     orientationText := 'Mode: Flat Top'
   else
     orientationText := 'Mode: Pointy Top';
-  DrawText(PChar(orientationText), windowWidth - PanelWidth + 50, 730, 16, DARKGRAY);
+  DrawText(PChar(orientationText),
+           windowWidth - PanelWidth + 50, 760, 16, DARKGRAY);
 
   if NomCarteImportee <> '' then
     DrawText(PChar('Carte: ' + NomCarteImportee + ' (importée)'),
-             windowWidth - PanelWidth + 50, 755, 14, PURPLE)
+             windowWidth - PanelWidth + 50, 782, 14, PURPLE)
   else
     DrawText(PChar('Carte: ' + lacarte.nom),
-             windowWidth - PanelWidth + 50, 755, 14, DARKBLUE);
+             windowWidth - PanelWidth + 50, 782, 14, DARKBLUE);
 
-  DrawText(PChar('Grille: ' + IntToStr(columns) + 'x' + IntToStr(rows) + ' (' + IntToStr(TotalNbreHex) + ' hex)'),
-           windowWidth - PanelWidth + 50, 775, 14, DARKGREEN);
+  DrawText(PChar('Grille: ' + IntToStr(columns) + 'x' + IntToStr(rows) +
+           ' (' + IntToStr(TotalNbreHex) + ' hex)'),
+           windowWidth - PanelWidth + 50, 802, 14, DARKGREEN);
 
-  // ⭐ MODIFIÉ: Ajout du cas amHauteur
+  // =================== MODE ACTUEL ===================
   case AppMode of
-    amNormal: DrawText('Mode actuel: Normal', windowWidth - PanelWidth + 50, 795, 14, DARKGREEN);
-    amDetection: DrawText('Mode actuel: Détection', windowWidth - PanelWidth + 50, 795, 14, ORANGE);
+    amNormal:
+      DrawText('Mode actuel: Normal',
+               windowWidth - PanelWidth + 50, 822, 14, DARKGREEN);
+    amDetection:
+      DrawText('Mode actuel: Détection',
+               windowWidth - PanelWidth + 50, 822, 14, ORANGE);
     amSuppression:
     begin
       case AppModeSuppressionIndex of
-        0: DrawText('Mode actuel: Suppression', windowWidth - PanelWidth + 50, 795, 14, RED);
-        1: DrawText('Mode actuel: Exemption', windowWidth - PanelWidth + 50, 795, 14, ORANGE);
+        0: DrawText('Mode actuel: Suppression',
+                    windowWidth - PanelWidth + 50, 822, 14, RED);
+        1: DrawText('Mode actuel: Exemption',
+                    windowWidth - PanelWidth + 50, 822, 14, ORANGE);
       end;
     end;
-    amObjet: DrawText('Mode actuel: Item', windowWidth - PanelWidth + 50, 795, 14, BLUE);
-    amRiviere: DrawText('Mode actuel: Rivière', windowWidth - PanelWidth + 50, 795, 14, RED);
-    amHauteur: DrawText('Mode actuel: Hauteur', windowWidth - PanelWidth + 50, 795, 14, DARKGREEN);  // ⭐ NOUVEAU
+    amObjet:
+      DrawText('Mode actuel: Item',
+               windowWidth - PanelWidth + 50, 822, 14, BLUE);
+    amRiviere:
+      DrawText('Mode actuel: Rivière',
+               windowWidth - PanelWidth + 50, 822, 14, RED);
+    amHauteur:
+      DrawText('Mode actuel: Hauteur',
+               windowWidth - PanelWidth + 50, 822, 14, DARKGREEN);
+    amInfR:
+      DrawText('Mode actuel: InfR',
+               windowWidth - PanelWidth + 50, 822, 14, MAROON);
+    amVoies:
+      DrawText('Mode actuel: Voies',
+               windowWidth - PanelWidth + 50, 822, 14, DARKBLUE);
   end;
 
-  // =================== MESSAGEBOX DE RÉINITIALISATION ===================
+  // =================== MESSAGEBOX RÉINITIALISATION DÉTECTION ===================
   if ShowResetDialog then
   begin
     dialogRect.x := (WindowWidth - 400) / 2;
@@ -696,14 +852,7 @@ begin
     IsDragging := False;
   end;
 end;
-
-//// =============================================================================
-// FICHIER 10: DrawHexGrid() COMPLÈTE MODIFIÉE
-// EMPLACEMENT: hexagongridflattop.lpr, remplacer la fonction existante (ligne ~671)
-// ACTION: REMPLACER TOUTE LA FONCTION par cette version
-// =============================================================================
-
-procedure DrawHexGrid(dessineLesNombres: boolean);
+    procedure DrawHexGrid(dessineLesNombres: boolean);
 var
   hexNumberText: array[0..5] of char;
   outlineColor: TColor;
@@ -711,53 +860,36 @@ var
   showNumbers: boolean;
   j, voisin: Integer;
   epaisseur: Single;
+  centre1, centre2: TVector2;
+  valVoie: Integer;
 begin
-  // Déterminer l'angle de rotation selon l'orientation
   case HexOrientation of
     hoFlatTop:   rotationAngle := 0;
     hoPointyTop: rotationAngle := 30;
   end;
 
-  // Afficher les numéros sauf en mode Détection
   showNumbers := dessineLesNombres and (AppMode <> amDetection);
 
   // =================== DESSIN DES HEXAGONES ===================
   for i := 1 to TotalNbreHex do
   begin
-    // Gestion de la visibilité selon le mode
     case AppMode of
       amNormal, amDetection:
       begin
-        if HexGrid[i].Supprime then
-          Continue;
+        if HexGrid[i].Supprime then Continue;
       end;
 
       amSuppression:
       begin
-        // En mode Suppression : afficher tous les hexagones
+        // Afficher tous les hexagones (supprimés inclus)
       end;
 
-      amObjet:
+      amObjet, amRiviere, amHauteur, amInfR, amVoies:
       begin
-        if HexGrid[i].Supprime then
-          Continue;
-      end;
-
-      amRiviere:
-      begin
-        if HexGrid[i].Supprime then
-          Continue;
-      end;
-
-      // ⭐ NOUVEAU: Mode Hauteur
-      amHauteur:
-      begin
-        if HexGrid[i].Supprime then
-          Continue;
+        if HexGrid[i].Supprime then Continue;
       end;
     end;
 
-    // Dessiner le polygone hexagonal si la grille n'est pas transparente
     if lacarte.grilletransparente = False then
     begin
       DrawPoly(Vector2Create(HexGrid[i].Center.x, HexGrid[i].Center.y),
@@ -769,21 +901,22 @@ begin
         outlineColor := raywhite;
     end;
 
-    // Déterminer la couleur du contour selon le mode
     if (AppMode = amDetection) and (HexGrid[i].IsReference > 0) then
       outlineColor := RED
     else if (AppMode = amSuppression) and HexGrid[i].Supprime then
       outlineColor := RED
     else if (AppMode = amRiviere) and (i = HexRiviereSource) then
       outlineColor := ORANGE
+    else if (AppMode = amInfR) and (i = HexInfRSource) then
+      outlineColor := ORANGE
+    else if (AppMode = amVoies) and (i = HexVoiesSource) then
+      outlineColor := SKYBLUE
     else
-      outlineColor := orange;
+      outlineColor := ORANGE;
 
-    // Dessiner le contour de l'hexagone
     DrawPolyLinesEx(Vector2Create(HexGrid[I].Center.x, HexGrid[I].Center.y),
                     6, HexRadius, rotationAngle, 2, outlineColor);
 
-    // Afficher les numéros d'hexagones (mode normal)
     if showNumbers and not HexGrid[i].Supprime then
     begin
       StrPCopy(hexNumberText, IntToStr(HexGrid[I].Number));
@@ -795,7 +928,6 @@ begin
 
     // =================== AFFICHAGES SPÉCIFIQUES PAR MODE ===================
 
-    // MODE DÉTECTION : Afficher les numéros de référence ou de type terrain
     if (AppMode = amDetection) and not HexGrid[i].Supprime then
     begin
       if HexGrid[i].IsReference > 0 then
@@ -816,7 +948,6 @@ begin
       end;
     end;
 
-    // MODE SUPPRESSION : Afficher X pour hexagones supprimés
     if (AppMode = amSuppression) and HexGrid[i].Supprime then
     begin
       DrawText('X',
@@ -825,7 +956,6 @@ begin
                24, RED);
     end;
 
-    // MODE SUPPRESSION : Afficher O pour hexagones exempts
     if (AppMode = amSuppression) and HexGrid[i].Exempt then
     begin
       DrawText('O',
@@ -834,7 +964,6 @@ begin
                24, RED);
     end;
 
-    // MODE OBJET : Afficher ronds rouges pour objets actifs
     if (AppMode = amObjet) and HexGrid[i].Objets[ValeurSpinnerObjet] then
     begin
       DrawCircle(Round(HexGrid[I].Center.x),
@@ -842,45 +971,143 @@ begin
                  5, RED);
     end;
 
-    // ⭐ NOUVEAU: MODE HAUTEUR - Afficher le chiffre de hauteur
     if (AppMode = amHauteur) and not HexGrid[i].Supprime then
     begin
       StrPCopy(hexNumberText, IntToStr(HexGrid[i].Hauteur));
       DrawText(hexNumberText,
                Round(HexGrid[I].Center.x - 8),
                Round(HexGrid[I].Center.y - 12),
-               20, red);
+               20, RED);
     end;
-  end;
 
-  // =================== DESSIN DES RIVIÈRES (UNIQUEMENT EN MODE RIVIÈRE) ===================
+    // MODE InfR : cercle marron sur le hex source en attente
+    if (AppMode = amInfR) and (i = HexInfRSource) then
+    begin
+      DrawCircle(Round(HexGrid[i].Center.x),
+                 Round(HexGrid[i].Center.y),
+                 6, BROWN);
+    end;
+
+    // MODE VOIES : cercle bleu sur le hex source en attente
+    if (AppMode = amVoies) and (i = HexVoiesSource) then
+    begin
+      DrawCircle(Round(HexGrid[i].Center.x),
+                 Round(HexGrid[i].Center.y),
+                 6, DARKBLUE);
+    end;
+
+  end; // fin boucle hexagones
+
+  // =================== DESSIN DES RIVIÈRES (MODE RIVIÈRE) ===================
   if AppMode = amRiviere then
   begin
     for i := 1 to TotalNbreHex do
     begin
       if HexGrid[i].Supprime then Continue;
 
-      // Parcourir les 6 côtés de chaque hexagone
       for j := 1 to 6 do
       begin
         if HexGrid[i].Edges[j] > 0 then
         begin
-          // Trouver le voisin
           voisin := HexGrid[i].Neighbors[j];
           if (voisin > 0) and (voisin <= TotalNbreHex) then
           begin
-            // Pour éviter de dessiner 2 fois, ne dessiner que si i < voisin
             if i < voisin then
             begin
-              epaisseur := HexGrid[i].Edges[j];  // 1-5 pixels
-              DrawLineEx(HexGrid[i].Center, HexGrid[voisin].Center, epaisseur, RED);
+              epaisseur := HexGrid[i].Edges[j];
+              DrawLineEx(HexGrid[i].Center, HexGrid[voisin].Center,
+                         epaisseur, RED);
             end;
           end;
         end;
       end;
     end;
   end;
+
+  // =================== DESSIN DES InfR (MODE InfR) ===================
+  if AppMode = amInfR then
+  begin
+    for i := 1 to TotalNbreHex do
+    begin
+      if HexGrid[i].Supprime then Continue;
+
+      for j := 1 to 6 do
+      begin
+        if HexGrid[i].InfR[j] > 0 then
+        begin
+          voisin := HexGrid[i].Neighbors[j];
+          if (voisin > 0) and (voisin <= TotalNbreHex) then
+          begin
+            if i < voisin then
+              DrawLineEx(HexGrid[i].Center, HexGrid[voisin].Center,
+                         5, BROWN);
+          end;
+        end;
+      end;
+    end;
+  end;
+
+  // =================== DESSIN DES VOIES (MODE VOIES) ===================
+  // Chaque lien est INDÉPENDANT : on lit uniquement la valeur stockée
+  // dans HexGrid[i].Voies[j] pour décider quoi dessiner.
+  // Les checkboxes ne servent QU'À COMPOSER la valeur lors du clic (HandleDragAndDrop).
+  // Elles n'ont AUCUN effet sur l'affichage ici → pas de bug global.
+  if AppMode = amVoies then
+  begin
+    for i := 1 to TotalNbreHex do
+    begin
+      if HexGrid[i].Supprime then Continue;
+
+      for j := 1 to 6 do
+      begin
+        if HexGrid[i].Voies[j] > 0 then
+        begin
+          voisin := HexGrid[i].Neighbors[j];
+          if (voisin > 0) and (voisin <= TotalNbreHex) then
+          begin
+            if i < voisin then
+            begin
+              centre1 := HexGrid[i].Center;
+              centre2 := HexGrid[voisin].Center;
+              valVoie := HexGrid[i].Voies[j];
+
+              // --- COUCHE 1 : Voie4 (chemin de fer) 8px ROUGE ---
+              // Dessinée en premier car plus large → sert de bordure
+              // On lit uniquement la valeur stockée, pas les checkboxes
+              if (valVoie div 1000) mod 10 = 1 then
+                DrawLineEx(centre1, centre2, 4 * VoieEpaisseur, RED);
+
+              // --- COUCHE 2 : Voie3 (nationale) 6px JAUNE ---
+              // Par-dessus le rouge → bordure rouge visible sur les bords
+              if (valVoie div 100) mod 10 = 1 then
+                DrawLineEx(centre1, centre2, 3 * VoieEpaisseur, YELLOW);
+
+              // --- COUCHE 3 : Voie2 (route) 4px BLEU ---
+              if (valVoie div 10) mod 10 = 1 then
+                DrawLineEx(centre1, centre2, 2 * VoieEpaisseur, BLUE);
+
+              // --- COUCHE 4 : Voie1 (sentier) 2px BLANC ---
+              // Dessinée en dernier → visible au centre de toutes les couches
+              if (valVoie mod 10) = 1 then
+                DrawLineEx(centre1, centre2, 1 * VoieEpaisseur, WHITE);
+
+            end;
+          end;
+        end;
+      end;
+    end;
+  end;
+
 end;
+//// =============================================================================
+// FICHIER 10: DrawHexGrid() COMPLÈTE MODIFIÉE
+// EMPLACEMENT: hexagongridflattop.lpr, remplacer la fonction existante (ligne ~671)
+// ACTION: REMPLACER TOUTE LA FONCTION par cette version
+// =============================================================================
+
+
+
+    // MODE SUPPRESSION : X pour hexagones supprimés
 
 // =============================================================================
 // RÉSUMÉ DES MODIFICATIONS:
@@ -1167,19 +1394,21 @@ var
   newHex1RefX, newHex1RefY: Single;
   deltaRefX, deltaRefY: Single;
   coteSource, coteDest: Integer;
+  valeurVoies: Integer;           // valeur décimale positionnelle à stocker
 begin
   mousePos := GetMousePosition();
 
   // =================== GESTION DU DÉBUT DU DRAG ===================
   if IsMouseButtonPressed(MOUSE_LEFT_BUTTON) then
   begin
-    if (mousePos.x < windowWidth - PanelWidth) and (mousePos.y < windowHeight - InfoBoxHeight) then
+    if (mousePos.x < windowWidth - PanelWidth) and
+       (mousePos.y < windowHeight - InfoBoxHeight) then
     begin
-      DragStartPos := mousePos;
+      DragStartPos    := mousePos;
       MouseStartOffsetX := Hex1ReferenceX;
       MouseStartOffsetY := Hex1ReferenceY;
-      DragStartOffsetX := lacarte.position.x;
-      DragStartOffsetY := lacarte.position.y;
+      DragStartOffsetX  := lacarte.position.x;
+      DragStartOffsetY  := lacarte.position.y;
       IsDragging := False;
     end;
   end;
@@ -1187,11 +1416,12 @@ begin
   // =================== GESTION DU DRAG EN COURS ===================
   if IsMouseButtonDown(MOUSE_LEFT_BUTTON) then
   begin
-    deltaX := mousePos.x - DragStartPos.x;
-    deltaY := mousePos.y - DragStartPos.y;
+    deltaX   := mousePos.x - DragStartPos.x;
+    deltaY   := mousePos.y - DragStartPos.y;
     distance := sqrt(deltaX * deltaX + deltaY * deltaY);
 
-    if (distance > MinDragDistance) and (mousePos.x < windowWidth - PanelWidth) then
+    if (distance > MinDragDistance) and
+       (mousePos.x < windowWidth - PanelWidth) then
     begin
       IsDragging := True;
 
@@ -1216,10 +1446,10 @@ begin
         end;
       end;
 
-      Hex1ReferenceX := newHex1RefX;
-      Hex1ReferenceY := newHex1RefY;
-      lacarte.position.x := DragStartOffsetX + deltaX;
-      lacarte.position.y := DragStartOffsetY + deltaY;
+      Hex1ReferenceX        := newHex1RefX;
+      Hex1ReferenceY        := newHex1RefY;
+      lacarte.position.x    := DragStartOffsetX + deltaX;
+      lacarte.position.y    := DragStartOffsetY + deltaY;
     end;
   end;
 
@@ -1228,28 +1458,30 @@ begin
   begin
     if IsDragging then
     begin
+      // C'était un DRAG : régénérer la grille après déplacement
       RegenerateurGrille;
       WriteLn('Régénération après glisser-déposer terminée');
     end
     else
     begin
-      // C'était un CLIC, pas un drag
+      // C'était un CLIC simple
       mouseX := GetMouseX();
       mouseY := GetMouseY();
 
-      if (mouseX < windowWidth - PanelWidth) and (mouseY < windowHeight - InfoBoxHeight) then
+      if (mouseX < windowWidth - PanelWidth) and
+         (mouseY < windowHeight - InfoBoxHeight) then
       begin
-        // Détecter quel hexagone a été cliqué
         for i := 1 to TotalNbreHex do
         begin
-          dx := mouseX - HexGrid[i].Center.x;
-          dy := mouseY - HexGrid[i].Center.y;
+          dx   := mouseX - HexGrid[i].Center.x;
+          dy   := mouseY - HexGrid[i].Center.y;
           dist := sqrt(dx * dx + dy * dy);
 
           if dist <= HexRadius - decalageRayon then
           begin
             // =================== GESTION DES CLICS PAR MODE ===================
             case AppMode of
+
               // =================== MODE NORMAL ===================
               amNormal:
               begin
@@ -1271,8 +1503,8 @@ begin
                 else if NombreReferences > 0 then
                 begin
                   HexGrid[i].TypeTerrain := ValeurSpinnerCorrection;
-                  WriteLn('Hexagone #' + IntToStr(i) + ' corrigé vers type ' + IntToStr(ValeurSpinnerCorrection));
-
+                  WriteLn('Hexagone #' + IntToStr(i) + ' corrigé vers type '
+                    + IntToStr(ValeurSpinnerCorrection));
                   for j := 1 to TotalNbreHex do
                     HexGrid[j].Selected := False;
                   HexGrid[i].Selected := True;
@@ -1294,7 +1526,7 @@ begin
               amSuppression:
               begin
                 case AppModeSuppressionIndex of
-                  0:
+                  0: // Suppression / Restauration
                   begin
                     if HexGrid[i].Supprime = False then
                     begin
@@ -1305,16 +1537,14 @@ begin
                       begin
                         ancienVoisin := HexGrid[i].Neighbors[j];
                         if ancienVoisin > 0 then
-                        begin
                           for k := 1 to 6 do
-                          begin
                             if HexGrid[ancienVoisin].Neighbors[k] = i then
                             begin
                               HexGrid[ancienVoisin].Neighbors[k] := 0;
-                              WriteLn('  Supprimé référence dans hexagone #' + IntToStr(ancienVoisin) + ' voisin[' + IntToStr(k) + ']');
+                              WriteLn('  Supprimé référence dans hex #'
+                                + IntToStr(ancienVoisin)
+                                + ' voisin[' + IntToStr(k) + ']');
                             end;
-                          end;
-                        end;
                       end;
 
                       for j := 1 to 6 do
@@ -1337,7 +1567,7 @@ begin
                     HexSelected := True;
                   end;
 
-                  1:
+                  1: // Exemption / Restauration exemption
                   begin
                     if HexGrid[i].Exempt = False then
                     begin
@@ -1362,12 +1592,15 @@ begin
               // =================== MODE OBJET/ITEM ===================
               amObjet:
               begin
-                HexGrid[i].Objets[ValeurSpinnerObjet] := not HexGrid[i].Objets[ValeurSpinnerObjet];
+                HexGrid[i].Objets[ValeurSpinnerObjet] :=
+                  not HexGrid[i].Objets[ValeurSpinnerObjet];
 
                 if HexGrid[i].Objets[ValeurSpinnerObjet] then
-                  WriteLn('Item ' + IntToStr(ValeurSpinnerObjet) + ' placé sur hexagone #' + IntToStr(i))
+                  WriteLn('Item ' + IntToStr(ValeurSpinnerObjet)
+                    + ' placé sur hex #' + IntToStr(i))
                 else
-                  WriteLn('Item ' + IntToStr(ValeurSpinnerObjet) + ' supprimé de l''hexagone #' + IntToStr(i));
+                  WriteLn('Item ' + IntToStr(ValeurSpinnerObjet)
+                    + ' supprimé de hex #' + IntToStr(i));
 
                 for j := 1 to TotalNbreHex do
                   HexGrid[j].Selected := False;
@@ -1381,10 +1614,9 @@ begin
               begin
                 if HexRiviereSource = 0 then
                 begin
-                  // PREMIER CLIC - Sélectionner la source
+                  // PREMIER CLIC : mémoriser la source
                   HexRiviereSource := i;
-                  WriteLn('Riviere: Source selectionnee #' + IntToStr(i));
-
+                  WriteLn('Riviere: Source #' + IntToStr(i));
                   for j := 1 to TotalNbreHex do
                     HexGrid[j].Selected := False;
                   HexGrid[i].Selected := True;
@@ -1393,7 +1625,7 @@ begin
                 end
                 else
                 begin
-                  // DEUXIÈME CLIC - Placer ou supprimer la rivière
+                  // DEUXIÈME CLIC : placer ou supprimer
                   coteSource := TrouverAreteCommuneEntreVoisins(HexRiviereSource, i);
 
                   if coteSource > 0 then
@@ -1402,26 +1634,25 @@ begin
 
                     if HexGrid[HexRiviereSource].Edges[coteSource] > 0 then
                     begin
-                      // SUPPRESSION - Rivière existe déjà
                       HexGrid[HexRiviereSource].Edges[coteSource] := 0;
                       HexGrid[i].Edges[coteDest] := 0;
-                      WriteLn('Riviere supprimee entre #' + IntToStr(HexRiviereSource) + ' et #' + IntToStr(i));
+                      WriteLn('Riviere supprimee entre #'
+                        + IntToStr(HexRiviereSource) + ' et #' + IntToStr(i));
                     end
                     else
                     begin
-                      // PLACEMENT - Nouvelle rivière
                       HexGrid[HexRiviereSource].Edges[coteSource] := ValeurSpinnerRiviere;
                       HexGrid[i].Edges[coteDest] := ValeurSpinnerRiviere;
-                      WriteLn('Riviere type ' + IntToStr(ValeurSpinnerRiviere) + ' placee entre #' + IntToStr(HexRiviereSource) + ' et #' + IntToStr(i));
+                      WriteLn('Riviere type ' + IntToStr(ValeurSpinnerRiviere)
+                        + ' entre #' + IntToStr(HexRiviereSource)
+                        + ' et #' + IntToStr(i));
                     end;
                   end
                   else
-                  begin
-                    WriteLn('ERREUR: Les hexagones #' + IntToStr(HexRiviereSource) + ' et #' + IntToStr(i) + ' ne sont pas adjacents');
-                  end;
+                    WriteLn('ERREUR: hex #' + IntToStr(HexRiviereSource)
+                      + ' et #' + IntToStr(i) + ' non adjacents');
 
                   HexRiviereSource := 0;
-
                   for j := 1 to TotalNbreHex do
                     HexGrid[j].Selected := False;
                   HexGrid[i].Selected := True;
@@ -1430,26 +1661,158 @@ begin
                 end;
               end;
 
-              // =================== ⭐ NOUVEAU: MODE HAUTEUR ===================
+              // =================== MODE HAUTEUR ===================
               amHauteur:
               begin
-                // Appliquer la hauteur sélectionnée à l'hexagone cliqué
                 HexGrid[i].Hauteur := ValeurSpinnerHauteur;
-
-                WriteLn('Hauteur ' + IntToStr(ValeurSpinnerHauteur) + ' appliquée à l''hexagone #' + IntToStr(i));
-
-                // Mettre à jour la sélection
+                WriteLn('Hauteur ' + IntToStr(ValeurSpinnerHauteur)
+                  + ' appliquée à hex #' + IntToStr(i));
                 for j := 1 to TotalNbreHex do
                   HexGrid[j].Selected := False;
                 HexGrid[i].Selected := True;
                 SelectedHex := HexGrid[i];
                 HexSelected := True;
               end;
-            end;
 
-            Break;
+              // =================== MODE InfR ===================
+              amInfR:
+              begin
+                if HexInfRSource = 0 then
+                begin
+                  // PREMIER CLIC : mémoriser la source
+                  HexInfRSource := i;
+                  WriteLn('InfR: Source #' + IntToStr(i));
+                  for j := 1 to TotalNbreHex do
+                    HexGrid[j].Selected := False;
+                  HexGrid[i].Selected := True;
+                  SelectedHex := HexGrid[i];
+                  HexSelected := True;
+                end
+                else
+                begin
+                  // DEUXIÈME CLIC : placer ou supprimer le lien infranchissable
+                  coteSource := TrouverAreteCommuneEntreVoisins(HexInfRSource, i);
+
+                  if coteSource > 0 then
+                  begin
+                    coteDest := CoteOppose(coteSource);
+
+                    if HexGrid[HexInfRSource].InfR[coteSource] > 0 then
+                    begin
+                      // Lien existant → SUPPRESSION
+                      HexGrid[HexInfRSource].InfR[coteSource] := 0;
+                      HexGrid[i].InfR[coteDest] := 0;
+                      WriteLn('InfR supprimé entre #'
+                        + IntToStr(HexInfRSource) + ' et #' + IntToStr(i));
+                    end
+                    else
+                    begin
+                      // Pas de lien → CRÉATION (valeur fixe 5)
+                      HexGrid[HexInfRSource].InfR[coteSource] := 5;
+                      HexGrid[i].InfR[coteDest] := 5;
+                      WriteLn('InfR créé entre #'
+                        + IntToStr(HexInfRSource) + ' et #' + IntToStr(i));
+                    end;
+                  end
+                  else
+                    WriteLn('InfR ERREUR: hex #' + IntToStr(HexInfRSource)
+                      + ' et #' + IntToStr(i) + ' non adjacents');
+
+                  HexInfRSource := 0;
+                  for j := 1 to TotalNbreHex do
+                    HexGrid[j].Selected := False;
+                  HexGrid[i].Selected := True;
+                  SelectedHex := HexGrid[i];
+                  HexSelected := True;
+                end;
+              end;
+
+              // =================== MODE VOIES ===================
+              amVoies:
+              begin
+                if HexVoiesSource = 0 then
+                begin
+                  // ---------------------------------------------------
+                  // PREMIER CLIC : mémoriser l'hexagone source
+                  // Le cercle bleu au centre sera affiché par DrawHexGrid
+                  // tant que HexVoiesSource <> 0
+                  // ---------------------------------------------------
+                  HexVoiesSource := i;
+                  WriteLn('Voies: Source #' + IntToStr(i));
+                  for j := 1 to TotalNbreHex do
+                    HexGrid[j].Selected := False;
+                  HexGrid[i].Selected := True;
+                  SelectedHex := HexGrid[i];
+                  HexSelected := True;
+                end
+                else
+                begin
+                  // ---------------------------------------------------
+                  // DEUXIÈME CLIC : poser ou supprimer les voies
+                  // ---------------------------------------------------
+                  coteSource := TrouverAreteCommuneEntreVoisins(HexVoiesSource, i);
+
+                  if coteSource > 0 then
+                  begin
+                    coteDest := CoteOppose(coteSource);
+
+                    if HexGrid[HexVoiesSource].Voies[coteSource] > 0 then
+                    begin
+                      // -----------------------------------------------
+                      // Des voies existent déjà sur ce côté : SUPPRESSION
+                      // On remet les deux côtés à 0 (efface tout)
+                      // -----------------------------------------------
+                      HexGrid[HexVoiesSource].Voies[coteSource] := 0;
+                      HexGrid[i].Voies[coteDest] := 0;
+                      WriteLn('Voies supprimées entre #'
+                        + IntToStr(HexVoiesSource) + ' et #' + IntToStr(i));
+                    end
+                    else
+                    begin
+                      // -----------------------------------------------
+                      // Aucune voie : CRÉATION
+                      // Calculer la valeur décimale selon cases cochées
+                      // ex: voie1+voie3 cochées → valeurVoies = 101
+                      // -----------------------------------------------
+                      valeurVoies := ValeurVoiesCochees;
+
+                      if valeurVoies > 0 then
+                      begin
+                        // Stocker la même valeur sur les deux côtés
+                        HexGrid[HexVoiesSource].Voies[coteSource] := valeurVoies;
+                        HexGrid[i].Voies[coteDest] := valeurVoies;
+                        WriteLn('Voies ' + IntToStr(valeurVoies)
+                          + ' créées entre #' + IntToStr(HexVoiesSource)
+                          + ' (côté ' + IntToStr(coteSource) + ')'
+                          + ' et #' + IntToStr(i)
+                          + ' (côté ' + IntToStr(coteDest) + ')');
+                      end
+                      else
+                      begin
+                        // Aucune checkbox cochée → rien à poser
+                        WriteLn('Voies: aucune voie sélectionnée (cochez au moins une case)');
+                      end;
+                    end;
+                  end
+                  else
+                    WriteLn('Voies ERREUR: hex #' + IntToStr(HexVoiesSource)
+                      + ' et #' + IntToStr(i) + ' non adjacents');
+
+                  // Réinitialiser la source dans tous les cas
+                  HexVoiesSource := 0;
+                  for j := 1 to TotalNbreHex do
+                    HexGrid[j].Selected := False;
+                  HexGrid[i].Selected := True;
+                  SelectedHex := HexGrid[i];
+                  HexSelected := True;
+                end;
+              end;
+
+            end; // fin case AppMode
+
+            Break; // Hexagone trouvé, sortir de la boucle de détection
           end;
-        end;
+        end; // fin boucle détection hexagone
       end;
     end;
 
@@ -1491,7 +1854,7 @@ begin
   GenerateHexagons;
   calculateNeighbors();
   CreationBouttons;
-  if faitAstar = false then AStarPathfinding(3,36);
+  //if faitAstar = false then AStarPathfinding(3,36);
 
   while not WindowShouldClose() do
   begin
